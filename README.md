@@ -1,5 +1,8 @@
 ## Introduction
 
+**NOTE: Current README file is outdated. Update to be released in future beta version.**
+
+
 In the realm of psychology and other social behavioral sciences, latent
 constructs are often measured using scales. These scales commonly
 undergo psychometric validation through methods such as exploratory
