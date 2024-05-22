@@ -95,7 +95,7 @@ composite_list <- composite_list(
   perseverence_effort   = sprintf("gs\%01d", c(1,4,6,9,10,12)),
 
   # Higher-order composites
-  grit                  = c("consistency_interest", "perseverence_effort")
+  grit                  = c("consistency_interest", "perseverance_effort")
 
  )
 

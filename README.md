@@ -102,7 +102,7 @@ This package can be installed directly from GitHub with `devtools`:
 ``` r
 # If `devtools` is not already installed, install from CRAN
 # install.packages("devtools")
-devtools::install_github("imh-ds/cscoring")
+devtools::install_github("imh-ds/cscore")
 ```
 
 Then load in the necessary packages:
@@ -112,7 +112,7 @@ Then load in the necessary packages:
 # install.packages("tidyverse")
 
 library(tidyverse)
-library(cscoring)
+library(cscore)
 ```
 
 ## Usage: Composite Scoring With Correlation Weights
@@ -144,17 +144,21 @@ should contain the names of the indicator variables.
 data(grit)
 
 # Specify the named list with composite names and their respective indicators
-varlist <- list(extraversion = sprintf("e%01d", seq(10)),
-                neuroticism = sprintf("n%01d", seq(10)),
-                agreeableness = sprintf("a%01d", seq(10)),
-                conscientiousness = sprintf("c%01d", seq(10)),
-                openness = sprintf("o%01d", seq(10)),
-                grit = sprintf("gs%01d", seq(12)))
+composite_list <- composite_list(
+  extraversion = sprintf("e%01d", seq(10)),
+  neuroticism = sprintf("n%01d", seq(10)),
+  agreeableness = sprintf("a%01d", seq(10)),
+  conscientiousness = sprintf("c%01d", seq(10)),
+  openness = sprintf("o%01d", seq(10)),
+  grit = sprintf("gs%01d", seq(12))
+)
 
 # Calculate correlation weighted composite scores
-correlation_data <- composite_score(data = grit,
-                                    varlist = varlist,
-                                    weight = "correlation")
+correlation_data <- composite_score(
+  data = grit,
+  composite_list = composite_list,
+  weight = "correlation"
+)
 ```
 
 ## Usage: Composite Scoring With Regression Weights
@@ -187,13 +191,15 @@ also specify `weight = "regression"`. Each name in the list should
 represent the name of the composite score variable, and the
 corresponding vector should contain the names of the indicator
 variables. Since the composite variables are kept the same, we’ll use
-the previously defined `varlist` for the regression-weighted data.
+the previously defined `composite_list` for the regression-weighted data.
 
 ``` r
 # Calculate regression weighted composite scores
-regression_data <- composite_score(data = grit,
-                                   varlist = varlist,
-                                   weight = "regression")
+regression_data <- composite_score(
+  data = grit,
+  composite_list = composite_list,
+  weight = "regression"
+)
 ```
 
 As an example of how different or similar the correlation and
@@ -220,9 +226,11 @@ argument as `"average"` like so:
 
 ``` r
 # Create unweighted composite scores using sum averages
-sum_data <- composite_score(data = grit,
-                            varlist = varlist,
-                            weight = "average")
+sum_data <- composite_score(
+  data = grit,
+  varlist = varlist,
+  weight = "average"
+)
 ```
 
 ## Comparing with Unweighted Composites: Uniform Indicators

@@ -64,14 +64,16 @@
 #'                       return_metrics = TRUE)
 #'
 #' @export
-calc_median_composite <- function(data,
-                                  var,
-                                  weight,
-                                  digits = 3,
-                                  name = NULL,
-                                  decay_rate = 0.5,
-                                  sigma = 0.5,
-                                  return_metrics) {
+calc_median_composite <- function(
+    data,
+    var,
+    weight,
+    digits = 3,
+    name = NULL,
+    decay_rate = 0.5,
+    sigma = 0.5,
+    return_metrics
+) {
   
   
   # -- DATA PREPARATION -- #

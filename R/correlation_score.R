@@ -40,7 +40,7 @@
 #' validity metrics, as well as indicator-level loadings and weights. See the
 #' documentation \code{?calc_metrics} for the calculation and reporting of
 #' reliability and validity measures.
-#' 
+#'
 #' If \code{file} is specified with a file path, this function will
 #' automatically write a formatted excel workbook of the returned output. The
 #' format is consistent with what is typically reported in APA 7th edition, and
@@ -78,10 +78,10 @@
 #' @examples
 #'
 #' data(grit)
-#' 
+#'
 #' # Specify the named list with composite names and their respective indicators
 #' composite_list <- composite_list(
-#' 
+#'
 #'   # Lower-order composites
 #'   extraversion          = sprintf("e%01d", seq(10)),
 #'   neuroticism           = sprintf("n%01d", seq(10)),
@@ -89,32 +89,34 @@
 #'   conscientiousness     = sprintf("c%01d", seq(10)),
 #'   openness              = sprintf("o%01d", seq(10)),
 #'   consistency_interest  = sprintf("gs%01d", c(2,3,5,7,8,11)),
-#'   perseverence_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
-#' 
+#'   perseverance_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
+#'
 #'   # Higher-order composites
-#'   grit                  = c("consistency_interest", "perseverence_effort")
-#' 
+#'   grit                  = c("consistency_interest", "perseverance_effort")
+#'
 #'  )
-#' 
+#'
 #' # Calculate correlation-weighted composite scores
 #' correlation_score(data = grit,
 #'                   composite_list = composite_list)
-#' 
+#'
 #' # Calculate correlation-weighted composite scores, reliability, & validity
 #' correlation_score(data = grit,
 #'                   composite_list = composite_list,
 #'                   digits = 3,
 #'                   return_metrics = TRUE,
 #'                   file = "composite.xlsx")
-#' 
+#'
 #' unlink("composite.xlsx")
-#'            
+#'
 #' @export
-correlation_score <- function(data = .,
-                              composite_list,
-                              digits = 3,
-                              return_metrics = FALSE,
-                              file = NULL){
+correlation_score <- function(
+    data = .,
+    composite_list,
+    digits = 3,
+    return_metrics = FALSE,
+    file = NULL
+){
   
   
   # -- DATA PREPARATION -- #

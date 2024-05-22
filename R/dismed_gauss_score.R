@@ -106,10 +106,10 @@
 #'   conscientiousness     = sprintf("c%01d", seq(10)),
 #'   openness              = sprintf("o%01d", seq(10)),
 #'   consistency_interest  = sprintf("gs%01d", c(2,3,5,7,8,11)),
-#'   perseverence_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
+#'   perseverance_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
 #'
 #'   # Higher-order composites
-#'   grit                  = c("consistency_interest", "perseverence_effort")
+#'   grit                  = c("consistency_interest", "perseverance_effort")
 #'
 #'  )
 #'                                    
@@ -129,12 +129,14 @@
 #' unlink("composite.xlsx")
 #' 
 #' @export
-dismed_gauss_score <- function(data = .,
-                               composite_list,
-                               sigma = 0.5,
-                               digits = 3,
-                               return_metrics = FALSE,
-                               file = NULL){
+dismed_gauss_score <- function(
+    data = .,
+    composite_list,
+    sigma = 0.5,
+    digits = 3,
+    return_metrics = FALSE,
+    file = NULL
+) {
   
   
   # -- DATA PREPARATION -- #

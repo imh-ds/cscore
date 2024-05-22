@@ -56,12 +56,14 @@
 #'                    return_metrics = TRUE)
 #'
 #' @export
-calc_cov_composite <- function(data,
-                               var,
-                               weight,
-                               digits = 3,
-                               name = NULL,
-                               return_metrics) {
+calc_cov_composite <- function(
+    data,
+    var,
+    weight,
+    digits = 3,
+    name = NULL,
+    return_metrics
+) {
   
   
   # -- DATA PREPARATION -- #

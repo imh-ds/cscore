@@ -8,7 +8,7 @@ export_metrics(metrics, digits, file)
 }
 \arguments{
 \item{metrics}{A required list object. The list should contain an array for
-composite scores under \code{data}, a dataframe of indicator loadings and
+composite scores under \code{data}, a data frame of indicator loadings and
 weights under \code{metrics}, and composite validity value under
 \code{validity}.}
 

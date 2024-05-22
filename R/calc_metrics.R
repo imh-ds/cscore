@@ -106,17 +106,13 @@
 #' }
 #'                    
 #' @export
-calc_metrics <- function(df,
-                         composite_score,
-                         weights,
-                         digits,
-                         name){
-  
-  # Call pipe function from `magrittr`
-  `%>%` <- magrittr::`%>%`
-  
-
-  
+calc_metrics <- function(
+    df,
+    composite_score,
+    weights,
+    digits,
+    name
+){
   
   # Get loadings as the correlation between indicator and composite
   df_loadings <- cbind(composite_score,

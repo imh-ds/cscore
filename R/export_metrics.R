@@ -8,7 +8,7 @@
 #' into a Word document or similar document software.
 #'
 #' @param metrics A required list object. The list should contain an array for
-#'   composite scores under \code{data}, a dataframe of indicator loadings and
+#'   composite scores under \code{data}, a data frame of indicator loadings and
 #'   weights under \code{metrics}, and composite validity value under
 #'   \code{validity}.
 #' @param digits The decimal places for the metrics to be rounded to. Default is
@@ -19,12 +19,11 @@
 #' @return A formatted excel workbook saved to specified file path.
 #' 
 #' @export
-export_metrics <- function(metrics,
-                           digits,
-                           file){
-  
-  # Call pipe function from `magrittr`
-  `%>%` <- magrittr::`%>%`
+export_metrics <- function(
+    metrics,
+    digits,
+    file
+) {
   
   # Set decimal place parameter
   decimal_places = paste0("0.",
@@ -54,8 +53,8 @@ export_metrics <- function(metrics,
   openxlsx::writeData(wb, "Data", df)
   
   # Create a style for the header: bold and border
-  headerStyle     <- openxlsx::createStyle(textDecoration = "bold",
-                                           border = "topBottom")
+  headerStyle <- openxlsx::createStyle(textDecoration = "bold",
+                                       border = "topBottom")
   
   # Apply the style to the header
   openxlsx::addStyle(wb,

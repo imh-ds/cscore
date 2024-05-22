@@ -41,6 +41,8 @@
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
 #' 
+#' @importFrom magrittr %>%
+#'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
 #'  dataframe, with additional columns appended at the end, is returned. These
 #'  new columns represent the calculated composite scores. If
@@ -71,7 +73,7 @@
 #'   perseverence_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
 #'
 #'   # Higher-order composites
-#'   grit                  = c("consistency_interest", "perseverence_effort")
+#'   grit                  = c("consistency_interest", "perseverance_effort")
 #'
 #'  )
 #' 
@@ -126,14 +128,16 @@
 #' 
 #' 
 #' @export
-composite_score <- function(data = .,
-                            composite_list,
-                            weight = "correlation",
-                            digits = 3,
-                            decay_rate = 0.5,
-                            sigma = 0.5,
-                            return_metrics = FALSE,
-                            file = NULL){
+composite_score <- function(
+    data = .,
+    composite_list,
+    weight = "correlation",
+    digits = 3,
+    decay_rate = 0.5,
+    sigma = 0.5,
+    return_metrics = FALSE,
+    file = NULL
+){
   
   
   # --------------------------------- #
