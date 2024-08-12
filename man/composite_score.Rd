@@ -2,6 +2,8 @@
 % Please edit documentation in R/composite_score.R
 \name{composite_score}
 \alias{composite_score}
+\alias{cscore}
+\alias{cs}
 \title{Calculate Composite Scores}
 \usage{
 composite_score(
@@ -11,8 +13,36 @@ composite_score(
   digits = 3,
   decay_rate = 0.5,
   sigma = 0.5,
+  entropy = "emp",
   return_metrics = FALSE,
-  file = NULL
+  file = NULL,
+  name = NULL
+)
+
+cscore(
+  data = .,
+  composite_list,
+  weight = "correlation",
+  digits = 3,
+  decay_rate = 0.5,
+  sigma = 0.5,
+  entropy = "emp",
+  return_metrics = FALSE,
+  file = NULL,
+  name = NULL
+)
+
+cs(
+  data = .,
+  composite_list,
+  weight = "correlation",
+  digits = 3,
+  decay_rate = 0.5,
+  sigma = 0.5,
+  entropy = "emp",
+  return_metrics = FALSE,
+  file = NULL,
+  name = NULL
 )
 }
 \arguments{
@@ -50,6 +80,17 @@ function in the distance-to-median weighting schema. The default value is
 set to 0.5. This argument is only relevant if \code{weight =
 "median_gauss"}.}
 
+\item{entropy}{A string value reflecting the mutual information entropy
+estimator from the \code{infotheo} package. Four estimators are available:
+\code{emp} to compute the entropy of the empirical probability
+distribution. Empirical entropy is suitable for simple calculations without
+corrections. \code{mm} applies an asymptotic bias-corrected estimator
+making it suitable for small sample sizes. \code{shrink} applies a
+shrinkage estimate of the Dirichlet probability distribution to provide a
+stable estimate useful for small sample sizes or sparse data. \code{sg}
+applies a Schurmann-Grassberger estimate of the Dirichlet probability
+distribution to serve as an alternative to the Shrinkage approach.}
+
 \item{return_metrics}{Logic to determine whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with
 reliability and validity metrics.}
@@ -60,10 +101,10 @@ as a formatted excel workbook. This argument is only relevant if
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
- dataframe, with additional columns appended at the end, is returned. These
- new columns represent the calculated composite scores. If
- \code{return_metrics = TRUE}, a list containing the following dataframes is
- returned:
+  dataframe, with additional columns appended at the end, is returned. These
+  new columns represent the calculated composite scores. If
+  \code{return_metrics = TRUE}, a list containing the following dataframes is
+  returned:
  \itemize{
  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
  variables.}
@@ -73,10 +114,11 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. See help documents `?average_score`,
-`?regression_score`, and `?correlation_score` for information on how the
-composite scores for each weighting scheme are calculated.
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable. See help documents
+  `?average_score`, `?regression_score`, and `?correlation_score` for
+  information on how the composite scores for each weighting scheme are
+  calculated.
 }
 \examples{
 
@@ -92,7 +134,7 @@ composite_list <- composite_list(
   conscientiousness     = sprintf("c\%01d", seq(10)),
   openness              = sprintf("o\%01d", seq(10)),
   consistency_interest  = sprintf("gs\%01d", c(2,3,5,7,8,11)),
-  perseverence_effort   = sprintf("gs\%01d", c(1,4,6,9,10,12)),
+  perseverance_effort   = sprintf("gs\%01d", c(1,4,6,9,10,12)),
 
   # Higher-order composites
   grit                  = c("consistency_interest", "perseverance_effort")
@@ -105,7 +147,7 @@ composite_list <- composite_list(
 composite_score(data = grit,
                 composite_list = composite_list,
                 weight = "average")
-                
+
 # Calculate correlation-weighted composite scores
 composite_score(data = grit,
                 composite_list = composite_list,
@@ -118,7 +160,7 @@ composite_score(data = grit,
 
 
 # FOR STANDARD DEVIATION FAMILY
-            
+
 # Calculate SD-upweighted composite scores
 composite_score(data = grit,
                 composite_list = composite_list,
@@ -147,6 +189,14 @@ composite_score(data = grit,
                 composite_list = composite_list,
                 weight = "median_gauss")
 
+
+
+# FOR INFORMATION FAMILY
+
+# Calculate median composite scores
+composite_score(data = grit,
+                composite_list = composite_list,
+                weight = "mutual_info")
 
 
 }

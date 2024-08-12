@@ -10,7 +10,8 @@ dismed_gauss_score(
   sigma = 0.5,
   digits = 3,
   return_metrics = FALSE,
-  file = NULL
+  file = NULL,
+  name = NULL
 )
 }
 \arguments{

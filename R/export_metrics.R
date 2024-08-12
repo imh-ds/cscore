@@ -20,9 +20,12 @@
 #' 
 #' @export
 export_metrics <- function(
+    
     metrics,
     digits,
+    name = NULL,
     file
+    
 ) {
   
   # Set decimal place parameter
@@ -33,47 +36,85 @@ export_metrics <- function(
   
   
   # Separate working data frames
-  df <- metrics[["data"]]
-  mt <- metrics[["metrics"]]
+  mt <- metrics[["metrics"]] %>% 
+    dplyr::mutate(
+      composite = ifelse(!duplicated(composite), composite, NA)
+    )
+    
   vl <- metrics[["validity"]]
   
   # Create a new workbook
   wb <- openxlsx::createWorkbook()
   
   # Add worksheets to the workbook
-  openxlsx::addWorksheet(wb, "Data")
-  openxlsx::addWorksheet(wb, "Metrics")
-  openxlsx::addWorksheet(wb, "Validity")
+  # openxlsx::addWorksheet(wb,
+  #                        sheetName = "Data")
+  openxlsx::addWorksheet(wb,
+                         sheetName = "Metrics")
+  openxlsx::addWorksheet(wb,
+                         sheetName = "Validity")
   
   
+  # Starting parameters
+  start_row <- 3
+  start_col <- 2
   
-  # -- WRITING DATA -- #
-  
-  # Write the data to the worksheet
-  openxlsx::writeData(wb, "Data", df)
-  
+
+  # STYLES ------------------------------------------------------------------
+
   # Create a style for the header: bold and border
-  headerStyle <- openxlsx::createStyle(textDecoration = "bold",
-                                       border = "topBottom")
+  headerStyle <- openxlsx::createStyle(
+    textDecoration = "bold",
+    border = "topBottom"
+  )
   
-  # Apply the style to the header
-  openxlsx::addStyle(wb,
-                     "Data",
-                     style = headerStyle,
-                     rows = 1,
-                     cols = 1:ncol(df),
-                     gridExpand = TRUE)
+  # Create a style for the header: bold, border, and center
+  headerStyle_r1 <- openxlsx::createStyle(
+    textDecoration = "bold",
+    border = "topBottom",
+    halign = "center"
+  )
   
+  # Create a border style for borderline at bottom of cell
+  borderStyle <- openxlsx::createStyle(
+    border = "bottom"
+  )
   
+  # Create a style for rounding cells to k decimal places
+  roundStyle <- openxlsx::createStyle(
+    numFmt = decimal_places,
+    halign = "center"
+  )
   
-  # -- WRITING METRICS -- #
+  # Create a style for rounding cells to k decimal places with bottom border
+  roundStyle_r1 <- openxlsx::createStyle(
+    numFmt = decimal_places,
+    halign = "center",
+    border = "bottom"
+  )
   
+  # Create a border style for borderline at bottom of cell
+  borderStyle_cen <- openxlsx::createStyle(
+    border = "bottom",
+    halign = "center"
+  )
+  
+  # Create a style for centering horizontally
+  cellStyle <- openxlsx::createStyle(
+    halign = "center"
+  )
+  
+
+  # WRITE METRICS -----------------------------------------------------------
+
   # Rename columns
   mt <- mt %>% 
-    dplyr::rename("Composite" = composite,
-                  "Indicator" = indicator,
-                  "Loadings"  = loadings,
-                  "Weights"   = weights) %>% 
+    dplyr::rename(
+      "Composite" = composite,
+      "Indicator" = indicator,
+      "Loadings"  = loadings,
+      "Weights"   = weights
+    ) %>% 
     
     # Replace "_" with space
     dplyr::mutate(Composite = gsub("_", " ", Composite)) %>% 
@@ -81,105 +122,133 @@ export_metrics <- function(
     # Apply title capitalization
     dplyr::mutate(Composite = stringr::str_to_title(Composite))
   
+  
+  # Write title to metrics sheet
+  openxlsx::writeData(
+    wb = wb,
+    sheet = "Metrics",
+    x = if(!is.null(name)) {
+      paste0(name,
+             " - Measurement Model (Loadings & Weights)")
+    } else {
+      "Measurement Model (Loadings & Weights)"
+    },
+    startCol = start_col,
+    startRow = start_row
+  )
+  
+  # Apply format for title
+  openxlsx::addStyle(
+    wb = wb,
+    sheet = "Metrics",
+    style = openxlsx::createStyle(
+      fontSize = 20,
+      textDecoration = "bold"
+    ),
+    cols = start_col,
+    rows = start_row
+  )
+  
+  
   # Write metrics to the worksheet
-  openxlsx::writeData(wb, "Metrics", mt)
-  
-  
-  
-  # Create a style for the header: bold, border, and center
-  headerStyle_r1  <- openxlsx::createStyle(textDecoration = "bold",
-                                           border = "topBottom",
-                                           halign = "center")
-  
-  # Create a border style for borderline at bottom of cell
-  borderStyle     <- openxlsx::createStyle(border = "bottom")
-  
-  # Create a style for rounding cells to k decimal places
-  roundStyle      <- openxlsx::createStyle(numFmt = decimal_places,
-                                           halign = "center")
-  
-  # Create a style for rounding cells to k decimal places with bottom border
-  roundStyle_r1   <- openxlsx::createStyle(numFmt = decimal_places,
-                                           halign = "center",
-                                           border = "bottom")
-  
+  openxlsx::writeData(
+    wb, 
+    sheet = "Metrics", 
+    x = mt,
+    startCol = start_col,
+    startRow = start_row + 2
+  )
   
   # Apply the style to the header (row 1, column 1)
-  openxlsx::addStyle(wb,
-                     "Metrics",
-                     style = headerStyle,
-                     rows = 1,
-                     cols = 1,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Metrics",
+    style = headerStyle,
+    rows = start_row + 2,
+    cols = start_col,
+    gridExpand = TRUE
+  )
   
   # Apply the style to the header (row 1, column 2:n)
-  openxlsx::addStyle(wb,
-                     "Metrics",
-                     style = headerStyle_r1,
-                     rows = 1,
-                     cols = 2:ncol(mt),
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Metrics",
+    style = headerStyle_r1,
+    rows = start_row + 2,
+    cols = (start_col + 1):(start_col + ncol(mt) - 1),
+    gridExpand = TRUE
+  )
   
   # Apply the style to the columns "Loadings" and "Weights"
-  openxlsx::addStyle(wb,
-                     "Metrics",
-                     style = roundStyle,
-                     rows = 2:(nrow(mt)),
-                     cols = 3:4,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Metrics",
+    style = roundStyle,
+    rows = (start_row + 3):(start_row + 2 + nrow(mt)),
+    cols = (start_col + 2):(start_col + 3),
+    gridExpand = TRUE
+  )
   
   # Apply the style to the columns "Loadings" and "Weights"
-  openxlsx::addStyle(wb,
-                     "Metrics",
-                     style = roundStyle_r1,
-                     rows = nrow(mt)+1,
-                     cols = 3:4,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Metrics",
+    style = roundStyle_r1,
+    rows = start_row + 2 + nrow(mt),
+    cols = (start_col + 2):(start_col + 3),
+    gridExpand = TRUE
+  )
   
   # Apply the border style to the last row
-  openxlsx::addStyle(wb,
-                     "Metrics",
-                     style = borderStyle,
-                     rows = nrow(mt)+1,
-                     cols = 1:2,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Metrics",
+    style = borderStyle,
+    rows = start_row + 2 + nrow(mt),
+    cols = start_col:(start_col + 1),
+    gridExpand = TRUE
+  )
   
   
   # Calculate the maximum string length in the first column
-  mt_max_length_c1 <- max(nchar(as.character(mt[,1])))
-  mt_max_length_c2 <- max(nchar(as.character(mt[,2])))
+  mt_max_length_c1 <- max(nchar(as.character(mt[,1])),
+                          na.rm = T)
+  mt_max_length_c2 <- max(nchar(as.character(mt[,2])),
+                          na.rm = T)
   
   # Set the width of the first column based on the maximum string length
-  openxlsx::setColWidths(wb,
-                         "Metrics",
-                         cols = 1,
-                         widths = mt_max_length_c1)
+  openxlsx::setColWidths(
+    wb,
+    sheet = "Metrics",
+    cols = 2,
+    widths = mt_max_length_c1
+  )
   
-  openxlsx::setColWidths(wb,
-                         "Metrics",
-                         cols = 2,
-                         widths = mt_max_length_c2)
+  openxlsx::setColWidths(
+    wb,
+    sheet = "Metrics",
+    cols = 3,
+    widths = mt_max_length_c2
+  )
   
-  
-  
-  # -- WRITING VALIDITY -- #
-  
-  # Create a border style for borderline at bottom of cell
-  borderStyle_cen <- openxlsx::createStyle(border = "bottom",
-                                           halign = "center")
-  
-  # Create a style for centering horizontally
-  cellStyle <- openxlsx::createStyle(halign = "center")
+  # Hide gridlines
+  openxlsx::showGridLines(wb,
+                          sheet = "Metrics",
+                          showGridLines = FALSE)
   
   
+  # WRITE VALIDITY ----------------------------------------------------------
+
   # Rename columns
   vl <- vl %>% 
-    dplyr::rename("Composite" = composite,
-                  "\u03B1" = alpha,        # Cronbach's alpha
-                  "\u03C1c" = rhoc,        # Composite reliability rho c
-                  "AVE" = ave,
-                  "\u03BB \u2208" = loading_range,
-                  "W \u2208" = weight_range) %>% 
+    dplyr::rename(
+      "Composite" = composite,
+      "\u03B1" = alpha,        # Cronbach's alpha
+      "\u03C1C" = rhoc,        # Composite reliability rho c
+      "AVE" = ave,
+      "\u03BB \u2208" = loading_range,
+      "W \u2208" = weight_range
+    ) %>% 
     
     # Replace _ with space
     dplyr::mutate(Composite = gsub("_", " ", Composite)) %>% 
@@ -187,64 +256,111 @@ export_metrics <- function(
     # Apply capitalization
     dplyr::mutate(Composite = stringr::str_to_title(Composite))
   
+  
+  # Write title to metrics sheet
+  openxlsx::writeData(
+    wb = wb,
+    sheet = "Validity",
+    x = if(!is.null(name)) {
+      paste0(name,
+             " - Measurement Reliability")
+    } else {
+      "Measurement Reliability"
+    },
+    startCol = start_col,
+    startRow = start_row
+  )
+  
+  # Apply format for title
+  openxlsx::addStyle(
+    wb = wb,
+    sheet = "Validity",
+    style = openxlsx::createStyle(
+      fontSize = 20,
+      textDecoration = "bold"
+    ),
+    cols = start_col,
+    rows = start_row
+  )
+  
+  
   # Write the dataframe to the worksheet
-  openxlsx::writeData(wb, "Validity", vl)
+  openxlsx::writeData(
+    wb = wb, 
+    sheet = "Validity", 
+    x = vl,
+    startCol = start_col,
+    startRow = start_row + 2)
   
   
   # Apply the style to the header (row 1, column 1)
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = headerStyle,
-                     rows = 1,
-                     cols = 1,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = headerStyle,
+    rows = start_row + 2,
+    cols = start_col,
+    gridExpand = TRUE
+  )
   
   # Apply the style to the header (row 1, column 2:n)
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = headerStyle_r1,
-                     rows = 1,
-                     cols = 2:ncol(vl),
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = headerStyle_r1,
+    rows = start_row + 2,
+    cols = (start_col + 1):(start_col + ncol(vl) - 1),
+    gridExpand = TRUE
+  )
   
   # Apply the style to the columns "alpha", "rhoc", and "ave"
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = roundStyle,
-                     rows = 2:(nrow(vl)),
-                     cols = 2:4,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = roundStyle,
+    rows = (start_row + 3):(start_row + 2 + nrow(vl)),
+    cols = (start_col + 1):(start_col + 3),
+    gridExpand = TRUE
+  )
   
   # Apply the style to the columns "alpha", "rhoc", and "ave"
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = roundStyle_r1,
-                     rows = nrow(vl)+1,
-                     cols = 2:4,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = roundStyle_r1,
+    rows = start_row + 2 + nrow(vl),
+    cols = (start_col + 1):(start_col + 3),
+    gridExpand = TRUE
+  )
   
   # Apply centering style to columns of loading and weight ranges
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = cellStyle,
-                     rows = 2:nrow(vl),
-                     cols = 5:6,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = cellStyle,
+    rows = (start_row + 3):(start_row + 2 + nrow(vl)),
+    cols = (start_col + 4):(start_col + 5),
+    gridExpand = TRUE
+  )
   
   # Apply the border style to the last row
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = borderStyle,
-                     rows = nrow(vl)+1,
-                     cols = 1,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = borderStyle,
+    rows = start_row + 2 + nrow(vl),
+    cols = start_col,
+    gridExpand = TRUE
+  )
   
-  openxlsx::addStyle(wb,
-                     "Validity",
-                     style = borderStyle_cen,
-                     rows = nrow(vl)+1,
-                     cols = 5:6,
-                     gridExpand = TRUE)
+  openxlsx::addStyle(
+    wb,
+    sheet = "Validity",
+    style = borderStyle_cen,
+    rows = start_row + 2 + nrow(vl),
+    cols = (start_col + 4):(start_col + 5),
+    gridExpand = TRUE
+  )
   
   
   # Calculate the maximum string length in the first column
@@ -253,29 +369,40 @@ export_metrics <- function(
   vl_wgt_length <- max(nchar(as.character(vl[,6])))
   
   # Set the width of the columns based on the maximum string length
-  openxlsx::setColWidths(wb,
-                         "Validity",
-                         cols = 1,
-                         widths = vl_max_length)
+  openxlsx::setColWidths(
+    wb,
+    "Validity",
+    cols = start_col,
+    widths = vl_max_length
+  )
   
-  openxlsx::setColWidths(wb,
-                         "Validity",
-                         cols = 5,
-                         widths = vl_lmb_length)
+  openxlsx::setColWidths(
+    wb,
+    "Validity",
+    cols = start_col + 4,
+    widths = vl_lmb_length
+  )
   
-  openxlsx::setColWidths(wb,
-                         "Validity",
-                         cols = 6,
-                         widths = vl_wgt_length)
+  openxlsx::setColWidths(
+    wb,
+    "Validity",
+    cols = start_col + 5,
+    widths = vl_wgt_length
+  )
   
   # Write "Hello World" to the first column and row after the last row of the table
-  openxlsx::writeData(wb,
-                      "Validity",
-                      x = "Note: \u03B1 = Cronbach's alpha; \u03C1c = Composite reliability; AVE = Average Variance Extracted; \u03BB \u2208 = Loadings Range; W \u2208 = Weights Range.",
-                      startCol = 1,
-                      startRow = nrow(vl) + 2)
+  openxlsx::writeData(
+    wb,
+    "Validity",
+    x = "Note: \u03B1 = Cronbach's alpha; \u03C1c = Composite reliability; AVE = Average Variance Extracted; \u03BB \u2208 = Loadings Range; W \u2208 = Weights Range.",
+    startCol = start_col,
+    startRow = start_row + 3 + nrow(vl)
+  )
   
-  
+  # Hide gridlines
+  openxlsx::showGridLines(wb,
+                          sheet = "Validity",
+                          showGridLines = FALSE)
   
   
   # -- SAVE FILE -- #

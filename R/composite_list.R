@@ -64,3 +64,11 @@ composite_list <- function(...){
   return(order_list)
   
 }
+
+#' @rdname composite_list
+#' @export
+clist <- composite_list
+
+#' @rdname composite_list
+#' @export
+cl <- composite_list

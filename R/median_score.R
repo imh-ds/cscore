@@ -89,7 +89,8 @@ median_score <- function(
     composite_list,
     digits = 3,
     return_metrics = FALSE,
-    file = NULL
+    file = NULL,
+    name = NULL
 ) {
   
   
@@ -252,9 +253,12 @@ median_score <- function(
     
     if(!is.null(file)){
       
-      export_metrics(composite_sheets,
-                     digits,
-                     file)
+      export_metrics(
+        metrics = composite_sheets,
+        digits = digits,
+        name = name,
+        file = file
+      )
       
     }
     

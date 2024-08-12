@@ -1,7 +1,13 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
 ## Introduction
 
-**NOTE: Current README file is outdated. Update to be released in future beta version.**
-
+**NOTE: Current README file is outdated. Update to be released in future
+beta version.**
 
 In the realm of psychology and other social behavioral sciences, latent
 constructs are often measured using scales. These scales commonly
@@ -191,7 +197,8 @@ also specify `weight = "regression"`. Each name in the list should
 represent the name of the composite score variable, and the
 corresponding vector should contain the names of the indicator
 variables. Since the composite variables are kept the same, we’ll use
-the previously defined `composite_list` for the regression-weighted data.
+the previously defined `composite_list` for the regression-weighted
+data.
 
 ``` r
 # Calculate regression weighted composite scores
@@ -212,7 +219,9 @@ round(cor(correlation_data$grit,
           use = "complete.obs"), 3)
 ```
 
-    ## [1] 0.978
+```         
+## [1] 0.978
+```
 
 We see that pearson’s r = 0.978. By this metric, the correlation and
 regression-weighted composite scores seem identical. However, we’ll see
@@ -246,7 +255,9 @@ round(cor(correlation_data$grit,
           use = "complete.obs"), 3)
 ```
 
-    ## [1] 0.997
+```         
+## [1] 0.997
+```
 
 ``` r
 round(cor(regression_data$grit,
@@ -254,7 +265,9 @@ round(cor(regression_data$grit,
           use = "complete.obs"), 3)
 ```
 
-    ## [1] 0.98
+```         
+## [1] 0.98
+```
 
 We can see that the unweighted composite scores closely align with that
 of the correlation (r = 0.997) and regression-weighted composite scores
@@ -269,20 +282,22 @@ cor(sum_data %>% select(all_of(variables)),
     use = "complete.obs") %>% round(2)
 ```
 
-    ##                    grit extraversion neuroticism openness conscientiousness
-    ## grit               1.00         0.19       -0.40     0.13              0.61
-    ## extraversion       0.19         1.00       -0.30     0.16              0.04
-    ## neuroticism       -0.40        -0.30        1.00    -0.10             -0.27
-    ## openness           0.13         0.16       -0.10     1.00              0.07
-    ## conscientiousness  0.61         0.04       -0.27     0.07              1.00
-    ## agreeableness      0.24         0.28       -0.15     0.10              0.11
-    ##                   agreeableness
-    ## grit                       0.24
-    ## extraversion               0.28
-    ## neuroticism               -0.15
-    ## openness                   0.10
-    ## conscientiousness          0.11
-    ## agreeableness              1.00
+```         
+##                    grit extraversion neuroticism openness conscientiousness
+## grit               1.00         0.19       -0.40     0.13              0.61
+## extraversion       0.19         1.00       -0.30     0.16              0.04
+## neuroticism       -0.40        -0.30        1.00    -0.10             -0.27
+## openness           0.13         0.16       -0.10     1.00              0.07
+## conscientiousness  0.61         0.04       -0.27     0.07              1.00
+## agreeableness      0.24         0.28       -0.15     0.10              0.11
+##                   agreeableness
+## grit                       0.24
+## extraversion               0.28
+## neuroticism               -0.15
+## openness                   0.10
+## conscientiousness          0.11
+## agreeableness              1.00
+```
 
 We can see that `conscientiousness` is highly correlated with `grit`.
 This is fairly consistent with the existing literature (Credé et al.,
@@ -296,20 +311,22 @@ cor(correlation_data %>% select(all_of(variables)),
     use = "complete.obs") %>% round(2)
 ```
 
-    ##                    grit extraversion neuroticism openness conscientiousness
-    ## grit               1.00         0.19       -0.40     0.13              0.61
-    ## extraversion       0.19         1.00       -0.30     0.16              0.05
-    ## neuroticism       -0.40        -0.30        1.00    -0.11             -0.28
-    ## openness           0.13         0.16       -0.11     1.00              0.06
-    ## conscientiousness  0.61         0.05       -0.28     0.06              1.00
-    ## agreeableness      0.23         0.29       -0.13     0.10              0.09
-    ##                   agreeableness
-    ## grit                       0.23
-    ## extraversion               0.29
-    ## neuroticism               -0.13
-    ## openness                   0.10
-    ## conscientiousness          0.09
-    ## agreeableness              1.00
+```         
+##                    grit extraversion neuroticism openness conscientiousness
+## grit               1.00         0.19       -0.40     0.13              0.61
+## extraversion       0.19         1.00       -0.30     0.16              0.05
+## neuroticism       -0.40        -0.30        1.00    -0.11             -0.28
+## openness           0.13         0.16       -0.11     1.00              0.06
+## conscientiousness  0.61         0.05       -0.28     0.06              1.00
+## agreeableness      0.23         0.29       -0.13     0.10              0.09
+##                   agreeableness
+## grit                       0.23
+## extraversion               0.29
+## neuroticism               -0.13
+## openness                   0.10
+## conscientiousness          0.09
+## agreeableness              1.00
+```
 
 ``` r
 # Correlation matrix for regression-weighted composites
@@ -317,20 +334,22 @@ cor(regression_data %>% select(all_of(variables)),
     use = "complete.obs") %>% round(2)
 ```
 
-    ##                    grit extraversion neuroticism openness conscientiousness
-    ## grit               1.00         0.16       -0.35     0.16              0.50
-    ## extraversion       0.16         1.00       -0.28     0.05              0.03
-    ## neuroticism       -0.35        -0.28        1.00    -0.15             -0.21
-    ## openness           0.16         0.05       -0.15     1.00              0.01
-    ## conscientiousness  0.50         0.03       -0.21     0.01              1.00
-    ## agreeableness      0.18         0.27       -0.11    -0.08              0.38
-    ##                   agreeableness
-    ## grit                       0.18
-    ## extraversion               0.27
-    ## neuroticism               -0.11
-    ## openness                  -0.08
-    ## conscientiousness          0.38
-    ## agreeableness              1.00
+```         
+##                    grit extraversion neuroticism openness conscientiousness
+## grit               1.00         0.16       -0.35     0.16              0.50
+## extraversion       0.16         1.00       -0.28     0.05              0.03
+## neuroticism       -0.35        -0.28        1.00    -0.15             -0.21
+## openness           0.16         0.05       -0.15     1.00              0.01
+## conscientiousness  0.50         0.03       -0.21     0.01              1.00
+## agreeableness      0.18         0.27       -0.11    -0.08              0.38
+##                   agreeableness
+## grit                       0.18
+## extraversion               0.27
+## neuroticism               -0.11
+## openness                  -0.08
+## conscientiousness          0.38
+## agreeableness              1.00
+```
 
 The correlation matrix for the correlation-weighted scores is nearly
 identical to the unweighted score, indicating that the indicators
@@ -402,7 +421,9 @@ round(cor(correlation_data_mix$conscientiousness,
           use = "complete.obs"), 3)
 ```
 
-    ## [1] 0.933
+```         
+## [1] 0.933
+```
 
 ``` r
 # Check correlations of regression-weighted composite with unweighted
@@ -411,7 +432,9 @@ round(cor(regression_data_mix$conscientiousness,
           use = "complete.obs"), 3)
 ```
 
-    ## [1] 0.465
+```         
+## [1] 0.465
+```
 
 Upon implementing this, we observe that the correlation between the
 unweighted and weighted `conscientiousness` variables decreases slightly
@@ -428,36 +451,42 @@ cor(sum_data_mix %>% select(all_of(variables)),
     use = "complete.obs") %>% round(3)
 ```
 
-    ##                    grit extraversion openness conscientiousness agreeableness
-    ## grit              1.000        0.188    0.130             0.336         0.237
-    ## extraversion      0.188        1.000    0.156            -0.151         0.283
-    ## openness          0.130        0.156    1.000            -0.010         0.105
-    ## conscientiousness 0.336       -0.151   -0.010             1.000        -0.050
-    ## agreeableness     0.237        0.283    0.105            -0.050         1.000
+```         
+##                    grit extraversion openness conscientiousness agreeableness
+## grit              1.000        0.188    0.130             0.336         0.237
+## extraversion      0.188        1.000    0.156            -0.151         0.283
+## openness          0.130        0.156    1.000            -0.010         0.105
+## conscientiousness 0.336       -0.151   -0.010             1.000        -0.050
+## agreeableness     0.237        0.283    0.105            -0.050         1.000
+```
 
 ``` r
 cor(correlation_data_mix %>% select(all_of(variables)),
     use = "complete.obs") %>% round(3)
 ```
 
-    ##                    grit extraversion openness conscientiousness agreeableness
-    ## grit              1.000        0.189    0.127             0.503         0.226
-    ## extraversion      0.189        1.000    0.159            -0.047         0.289
-    ## openness          0.127        0.159    1.000             0.021         0.100
-    ## conscientiousness 0.503       -0.047    0.021             1.000         0.018
-    ## agreeableness     0.226        0.289    0.100             0.018         1.000
+```         
+##                    grit extraversion openness conscientiousness agreeableness
+## grit              1.000        0.189    0.127             0.503         0.226
+## extraversion      0.189        1.000    0.159            -0.047         0.289
+## openness          0.127        0.159    1.000             0.021         0.100
+## conscientiousness 0.503       -0.047    0.021             1.000         0.018
+## agreeableness     0.226        0.289    0.100             0.018         1.000
+```
 
 ``` r
 cor(regression_data_mix %>% select(all_of(variables)),
     use = "complete.obs") %>% round(3)
 ```
 
-    ##                    grit extraversion openness conscientiousness agreeableness
-    ## grit              1.000        0.161    0.161             0.179         0.184
-    ## extraversion      0.161        1.000    0.054            -0.030         0.270
-    ## openness          0.161        0.054    1.000             0.028        -0.075
-    ## conscientiousness 0.179       -0.030    0.028             1.000         0.160
-    ## agreeableness     0.184        0.270   -0.075             0.160         1.000
+```         
+##                    grit extraversion openness conscientiousness agreeableness
+## grit              1.000        0.161    0.161             0.179         0.184
+## extraversion      0.161        1.000    0.054            -0.030         0.270
+## openness          0.161        0.054    1.000             0.028        -0.075
+## conscientiousness 0.179       -0.030    0.028             1.000         0.160
+## agreeableness     0.184        0.270   -0.075             0.160         1.000
+```
 
 The correlation between `grit` and `conscientiousness` for the
 unweighted sum score is r = 0.336, while it is r = 0.503 for
@@ -502,13 +531,13 @@ higher_data <- grit %>%
 ## Additional Usage: Measurement Metrics
 
 Researchers can also extract measurement metrics for both correlation
-and regression-weighted composite scores. Two metrics can be
-extracted: 1) *weights* and 2) *loadings*. The weights are the
-correlation and regression weights that were discussed in previous
-sections. The loadings are just the bivariate correlation coefficients
-between the individual indicators and their respective composite
-variable. To get both the weights and loadings of the indicators, we can
-use the `composite_metrics` function like so:
+and regression-weighted composite scores. Two metrics can be extracted:
+1) *weights* and 2) *loadings*. The weights are the correlation and
+regression weights that were discussed in previous sections. The
+loadings are just the bivariate correlation coefficients between the
+individual indicators and their respective composite variable. To get
+both the weights and loadings of the indicators, we can use the
+`composite_metrics` function like so:
 
 ``` r
 # Specify data and varlist like when calculating the composite scores
@@ -519,13 +548,15 @@ metrics <- composite_metrics(grit,
 head(metrics)
 ```
 
-    ##      composite indicator    weights  loadings
-    ## 1 extraversion        e1 0.09829385 0.6966296
-    ## 2 extraversion        e2 0.10237413 0.7209283
-    ## 3 extraversion        e3 0.09795526 0.6845268
-    ## 4 extraversion        e4 0.11210493 0.7916125
-    ## 5 extraversion        e5 0.10850156 0.7675970
-    ## 6 extraversion        e6 0.08735864 0.5986227
+```         
+##      composite indicator    weights  loadings
+## 1 extraversion        e1 0.09829385 0.6966296
+## 2 extraversion        e2 0.10237413 0.7209283
+## 3 extraversion        e3 0.09795526 0.6845268
+## 4 extraversion        e4 0.11210493 0.7916125
+## 5 extraversion        e5 0.10850156 0.7675970
+## 6 extraversion        e6 0.08735864 0.5986227
+```
 
 By default, it will return both weights and loadings. The weighting
 scheme is also set to correlation by default, but it can be changed by
@@ -609,16 +640,18 @@ effects from all other viable predictors.
 library(seminr)
 ```
 
-    ## 
-    ## Attaching package: 'seminr'
+```         
+## 
+## Attaching package: 'seminr'
 
-    ## The following objects are masked from 'package:cscoring':
-    ## 
-    ##     correlation_weights, regression_weights
+## The following objects are masked from 'package:cscoring':
+## 
+##     correlation_weights, regression_weights
 
-    ## The following object is masked from 'package:purrr':
-    ## 
-    ##     rerun
+## The following object is masked from 'package:purrr':
+## 
+##     rerun
+```
 
 ``` r
 # Set measurements for PLS-SEM correlation weights
@@ -643,9 +676,11 @@ plssem_cor <- seminr::estimate_pls(data = grit,
                                    structural_model = structure)
 ```
 
-    ## Generating the seminr model
+```         
+## Generating the seminr model
 
-    ## All 500 observations are valid.
+## All 500 observations are valid.
+```
 
 ``` r
 # Save PLS-SEM correlation weighted composite scores
@@ -655,20 +690,22 @@ plssem_cordata <- as.data.frame(plssem_cor$construct_scores)
 cor(plssem_cordata) %>% round(3)
 ```
 
-    ##                   extraversion openness neuroticism conscientiousness
-    ## extraversion             1.000    0.210      -0.331             0.108
-    ## openness                 0.210    1.000      -0.192             0.185
-    ## neuroticism             -0.331   -0.192       1.000            -0.299
-    ## conscientiousness        0.108    0.185      -0.299             1.000
-    ## agreeableness            0.369    0.089      -0.200             0.159
-    ## grit                     0.244    0.239      -0.417             0.663
-    ##                   agreeableness   grit
-    ## extraversion              0.369  0.244
-    ## openness                  0.089  0.239
-    ## neuroticism              -0.200 -0.417
-    ## conscientiousness         0.159  0.663
-    ## agreeableness             1.000  0.292
-    ## grit                      0.292  1.000
+```         
+##                   extraversion openness neuroticism conscientiousness
+## extraversion             1.000    0.210      -0.331             0.108
+## openness                 0.210    1.000      -0.192             0.185
+## neuroticism             -0.331   -0.192       1.000            -0.299
+## conscientiousness        0.108    0.185      -0.299             1.000
+## agreeableness            0.369    0.089      -0.200             0.159
+## grit                     0.244    0.239      -0.417             0.663
+##                   agreeableness   grit
+## extraversion              0.369  0.244
+## openness                  0.089  0.239
+## neuroticism              -0.200 -0.417
+## conscientiousness         0.159  0.663
+## agreeableness             1.000  0.292
+## grit                      0.292  1.000
+```
 
 As observed, the correlation matrix for the PLS-SEM correlation-weighted
 reflective composites reveals that the association between
@@ -708,9 +745,11 @@ plssem_reg <- seminr::estimate_pls(data = grit,
                                    structural_model = structure)
 ```
 
-    ## Generating the seminr model
+```         
+## Generating the seminr model
 
-    ## All 500 observations are valid.
+## All 500 observations are valid.
+```
 
 ``` r
 # Save PLS-SEM regression weighted composite scores
@@ -720,20 +759,22 @@ plssem_regdata <- as.data.frame(plssem_reg$construct_scores)
 cor(plssem_regdata) %>% round(3)
 ```
 
-    ##                   extraversion openness neuroticism conscientiousness
-    ## extraversion             1.000    0.174      -0.306             0.284
-    ## openness                 0.174    1.000      -0.239             0.339
-    ## neuroticism             -0.306   -0.239       1.000            -0.362
-    ## conscientiousness        0.284    0.339      -0.362             1.000
-    ## agreeableness            0.368    0.160      -0.332             0.290
-    ## grit                     0.327    0.327      -0.430             0.720
-    ##                   agreeableness   grit
-    ## extraversion              0.368  0.327
-    ## openness                  0.160  0.327
-    ## neuroticism              -0.332 -0.430
-    ## conscientiousness         0.290  0.720
-    ## agreeableness             1.000  0.360
-    ## grit                      0.360  1.000
+```         
+##                   extraversion openness neuroticism conscientiousness
+## extraversion             1.000    0.174      -0.306             0.284
+## openness                 0.174    1.000      -0.239             0.339
+## neuroticism             -0.306   -0.239       1.000            -0.362
+## conscientiousness        0.284    0.339      -0.362             1.000
+## agreeableness            0.368    0.160      -0.332             0.290
+## grit                     0.327    0.327      -0.430             0.720
+##                   agreeableness   grit
+## extraversion              0.368  0.327
+## openness                  0.160  0.327
+## neuroticism              -0.332 -0.430
+## conscientiousness         0.290  0.720
+## agreeableness             1.000  0.360
+## grit                      0.360  1.000
+```
 
 As evident, the overfitting issue becomes significantly more pronounced
 when employing regression-weighted formative composite variables. In

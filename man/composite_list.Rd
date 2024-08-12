@@ -2,9 +2,15 @@
 % Please edit documentation in R/composite_list.R
 \name{composite_list}
 \alias{composite_list}
+\alias{clist}
+\alias{cl}
 \title{Composite List}
 \usage{
 composite_list(...)
+
+clist(...)
+
+cl(...)
 }
 \arguments{
 \item{...}{Required named objects. Each vector should include the columns 

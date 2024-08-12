@@ -1,20 +1,45 @@
-#' Calculate Unweighted Composite Scores
+#' Calculate Information-Weighted Composite Scores
 #'
 #' @description
 #'
 #' Create composite scores of scales by specifying the indicators that go into
-#' each respective composite variable. Unweighted composite scores are
-#' calculated by taking the straight average of the indicators:
+#' each respective composite variable. Composite scores are calculated as the
+#' information-weighted mean of the indicators.
 #'
-#' \deqn{\bar{cs}_a = \frac{1}{n} \sum_{i=1}^{n} I[i]}{composite_score = 1/n *
-#' sum(I[i]) for i=1 to n)}
+#' Each indicator's information weight (\eqn{w}) is calculated as its average
+#' mutual information with all other indicators. An information matrix is first
+#' computed using all indicators of the composite variable to obtain all
+#' possible combinations of pairwise mutual information, such that the
+#' information matrix is calculated where the entry in the i-th row and j-th
+#' column is the mutual information between the i-th and j-th indicators. The
+#' diagonal of the information matrix (i.e., mutual information of i-th
+#' indicator to itself) are set to \code{NA} to remove perfect information.
+#' Indicator weight calculation is then mathematically represented as:
 #'
-#' where \eqn{\bar{cs}_a} is the unweighted average composite score and \eqn{I}
-#' is the indicator variable. If \code{return_metrics} is set to \code{TRUE},
-#' the function also returns composite reliability and validity metrics, as well
-#' as indicator-level loadings and weights. See the documentation
-#' \code{?calc_metrics} for the calculation and reporting of reliability and
-#' validity measures.
+#' \deqn{w[j] = \frac{1}{n} \sum_{i=1}^{n} mi\_matrix[i, j]}{w[j] = 1/n *
+#' sum(inf_matrix[i, j] for i=1 to n)}
+#'
+#' where \eqn{n} is the number of rows in \eqn{mi\_matrix}, and the sum is
+#' taken over all \eqn{i} such that \eqn{mi\_matrix[i, j]} is not \code{NA}.
+#' The information weights are then normalized by dividing each weight by the
+#' mean of the weights:
+#'
+#' \deqn{w[j] = \frac{w[j]}{\frac{1}{m} \sum_{k=1}^{m} w[k]}}{w[j] = w[j] / (1/m
+#' * sum(w[k] for k=1 to m))}
+#'
+#' where \eqn{m} is the number of columns in \eqn{inf\_matrix}, and the sum is
+#' taken over all \eqn{k}. The information-weighted composite score is then
+#' calculated as follows:
+#'
+#' \deqn{\bar{cs}_{mi} = \frac{1}{n} \sum_{i=1}^{n} I[i] * w_i}{composite_score_{mi} = 1/n
+#' * sum(df[i] * w_i for i=1 to n)}
+#'
+#' where \eqn{\bar{cs}_{mi}} is the correlation weighted composite score and
+#' \eqn{I} is the raw indicator input. If \code{return_metrics} is set to
+#' \code{TRUE}, the function also returns composite reliability and
+#' validity metrics, as well as indicator-level loadings and weights. See the
+#' documentation \code{?calc_metrics} for the calculation and reporting of
+#' reliability and validity measures.
 #'
 #' If \code{file} is specified with a file path, this function will
 #' automatically write a formatted excel workbook of the returned output. The
@@ -38,10 +63,10 @@
 #'   \code{return_metrics = TRUE}.
 #'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
-#'  dataframe, with additional columns appended at the end, is returned. These
-#'  new columns represent the calculated composite scores. If
-#'  \code{return_metrics = TRUE}, a list containing the following dataframes is
-#'  returned:
+#'   dataframe, with additional columns appended at the end, is returned. These
+#'   new columns represent the calculated composite scores. If
+#'   \code{return_metrics = TRUE}, a list containing the following dataframes is
+#'   returned:
 #'  \itemize{
 #'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
 #'  variables.}
@@ -71,23 +96,24 @@
 #'
 #'  )
 #'
-#' # Calculate unweighted composite scores
-#' average_score(data = grit,
-#'               composite_list = composite_list)
-#'                   
-#' # Calculate unweighted composite scores, reliability, & validity
-#' average_score(data = grit,
-#'               composite_list = composite_list,
-#'               digits = 3,
-#'               return_metrics = TRUE,
-#'               file = "composite.xlsx")
+#' # Calculate correlation-weighted composite scores
+#' information_score(data = grit,
+#'                   composite_list = composite_list)
+#'
+#' # Calculate correlation-weighted composite scores, reliability, & validity
+#' information_score(data = grit,
+#'                   composite_list = composite_list,
+#'                   digits = 3,
+#'                   return_metrics = TRUE,
+#'                   file = "composite.xlsx")
 #'
 #' unlink("composite.xlsx")
 #'
 #' @export
-average_score <- function(
+information_score <- function(
     data = .,
     composite_list,
+    entropy = "emp",
     digits = 3,
     return_metrics = FALSE,
     file = NULL,
@@ -114,12 +140,12 @@ average_score <- function(
     data[names(lower_order_varlist)] <- lapply(lower_order_varlist,
                                                function(var) {
                                                  
-                                                 calc_cov_composite(data = data,
-                                                                    var = var,
-                                                                    weight = "average",
-                                                                    name = NULL,
-                                                                    digits = 3,
-                                                                    return_metrics = FALSE)
+                                                 calc_mi_composite(data,
+                                                                   var,
+                                                                   entropy = entropy,
+                                                                   name = NULL,
+                                                                   digits = 3,
+                                                                   return_metrics = FALSE)
                                                  
                                                })
     
@@ -136,12 +162,12 @@ average_score <- function(
       data[names(higher_order_varlist)] <- lapply(higher_order_varlist,
                                                   function(var) {
                                                     
-                                                    calc_cov_composite(data = data,
-                                                                       var = var,
-                                                                       weight = "average",
-                                                                       name = NULL,
-                                                                       digits = 3,
-                                                                       return_metrics = FALSE)
+                                                    calc_mi_composite(data,
+                                                                      var,
+                                                                      entropy = entropy,
+                                                                      name = NULL,
+                                                                      digits = 3,
+                                                                      return_metrics = FALSE)
                                                     
                                                   })
       
@@ -166,12 +192,12 @@ average_score <- function(
                               
                               var <- lower_order_varlist[[name]]
                               
-                              calc_cov_composite(data = data,
-                                                 var = var,
-                                                 weight = "average",
-                                                 name = name,
-                                                 digits = digits,
-                                                 return_metrics = TRUE)
+                              calc_mi_composite(data = data,
+                                                var = var,
+                                                entropy = entropy,
+                                                name = name,
+                                                digits = digits,
+                                                return_metrics = TRUE)
                               
                             })
     
@@ -201,12 +227,12 @@ average_score <- function(
                                  
                                  var <- higher_order_varlist[[name]]
                                  
-                                 calc_cov_composite(data = data,
-                                                    var = var,
-                                                    weight = "average",
-                                                    name = name,
-                                                    digits = digits,
-                                                    return_metrics = TRUE)
+                                 calc_mi_composite(data = data,
+                                                   var = var,
+                                                   entropy = entropy,
+                                                   name = name,
+                                                   digits = digits,
+                                                   return_metrics = TRUE)
                                  
                                })
       
@@ -267,6 +293,8 @@ average_score <- function(
     # -- RETURN -- #
     return(composite_sheets)
     
-  }  
+  }
+  
+  
   
 }

@@ -1,11 +1,11 @@
 Package: cscore
 Type: Package
 Title: Weighted Composite Scoring for Scales
-Version: 0.2.1
+Version: 0.2.2
 Author: Hohjin Im
 Maintainer: Hohjin Im <hohjini@uci.edu>
-Description: Correlation and regression-weighted composite scoring for
-  scales used in psychological and social behavioral research.
+Description: Weighted composite scoring for scales used in psychological and 
+    social behavioral research.
 License: GPL (>= 2)
 Encoding: UTF-8
 Depends:
@@ -18,6 +18,7 @@ Imports:
     lm.beta,
     openxlsx,
     ltm,
-    tidyverse
+    tidyverse,
+    infotheo
 LazyData: true
 RoxygenNote: 7.3.1

@@ -10,7 +10,8 @@ dismed_decay_score(
   decay_rate = 0.5,
   digits = 3,
   return_metrics = FALSE,
-  file = NULL
+  file = NULL,
+  name = NULL
 )
 }
 \arguments{

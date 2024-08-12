@@ -1,11 +1,11 @@
 #' Calculate Composite Scores
-#' 
-#' @description
-#' Create composite scores of scales by specifying the indicators that go into
-#' each respective composite variable. See help documents `?average_score`,
-#' `?regression_score`, and `?correlation_score` for information on how the
-#' composite scores for each weighting scheme are calculated.
-#' 
+#'
+#' @description Create composite scores of scales by specifying the indicators
+#'   that go into each respective composite variable. See help documents
+#'   `?average_score`, `?regression_score`, and `?correlation_score` for
+#'   information on how the composite scores for each weighting scheme are
+#'   calculated.
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param composite_list A required \code{composite_list} object. Each name in
@@ -34,20 +34,30 @@
 #'   function in the distance-to-median weighting schema. The default value is
 #'   set to 0.5. This argument is only relevant if \code{weight =
 #'   "median_gauss"}.
+#' @param entropy A string value reflecting the mutual information entropy
+#'   estimator from the \code{infotheo} package. Four estimators are available:
+#'   \code{emp} to compute the entropy of the empirical probability
+#'   distribution. Empirical entropy is suitable for simple calculations without
+#'   corrections. \code{mm} applies an asymptotic bias-corrected estimator
+#'   making it suitable for small sample sizes. \code{shrink} applies a
+#'   shrinkage estimate of the Dirichlet probability distribution to provide a
+#'   stable estimate useful for small sample sizes or sparse data. \code{sg}
+#'   applies a Schurmann-Grassberger estimate of the Dirichlet probability
+#'   distribution to serve as an alternative to the Shrinkage approach.
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
 #' @param file An optional file path. If specified, the results will be written
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
-#' 
+#'
 #' @importFrom magrittr %>%
 #'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
-#'  dataframe, with additional columns appended at the end, is returned. These
-#'  new columns represent the calculated composite scores. If
-#'  \code{return_metrics = TRUE}, a list containing the following dataframes is
-#'  returned:
+#'   dataframe, with additional columns appended at the end, is returned. These
+#'   new columns represent the calculated composite scores. If
+#'   \code{return_metrics = TRUE}, a list containing the following dataframes is
+#'   returned:
 #'  \itemize{
 #'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
 #'  variables.}
@@ -55,11 +65,11 @@
 #'  \item{\strong{Validity}: }{A matrix of composite reliability and validity
 #'  metrics.}
 #' }
-#' 
+#'
 #' @examples
-#' 
+#'
 #' data(grit)
-#' 
+#'
 #' # Specify the named list with composite names and their respective indicators
 #' composite_list <- composite_list(
 #'
@@ -70,63 +80,71 @@
 #'   conscientiousness     = sprintf("c%01d", seq(10)),
 #'   openness              = sprintf("o%01d", seq(10)),
 #'   consistency_interest  = sprintf("gs%01d", c(2,3,5,7,8,11)),
-#'   perseverence_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
+#'   perseverance_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
 #'
 #'   # Higher-order composites
 #'   grit                  = c("consistency_interest", "perseverance_effort")
 #'
 #'  )
-#' 
+#'
 #' # FOR COVARIANCE FAMILY
-#' 
+#'
 #' # Calculate unweighted composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "average")
-#'                 
+#'
 #' # Calculate correlation-weighted composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "correlation")
-#' 
+#'
 #' # Calculate regression-weighted composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "regression")
-#' 
-#' 
+#'
+#'
 #' # FOR STANDARD DEVIATION FAMILY
-#'             
+#'
 #' # Calculate SD-upweighted composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "sd_upweight")
-#' 
+#'
 #' # Calculate SD-downweighted composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "sd_downweight")
-#' 
-#' 
+#'
+#'
 #' # FOR MEDIAN FAMILY
-#' 
+#'
 #' # Calculate median composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "median")
-#' 
+#'
 #' # Calculate distance-to-median decay function composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "median_decay")
-#' 
+#'
 #' # Calculate distance-to-median gaussian function composite scores
 #' composite_score(data = grit,
 #'                 composite_list = composite_list,
 #'                 weight = "median_gauss")
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#' # FOR INFORMATION FAMILY
+#'
+#' # Calculate median composite scores
+#' composite_score(data = grit,
+#'                 composite_list = composite_list,
+#'                 weight = "mutual_info")
+#'
+#'
 #' @export
 composite_score <- function(
     data = .,
@@ -135,8 +153,10 @@ composite_score <- function(
     digits = 3,
     decay_rate = 0.5,
     sigma = 0.5,
+    entropy = "emp",
     return_metrics = FALSE,
-    file = NULL
+    file = NULL,
+    name = NULL
 ){
   
   
@@ -147,11 +167,14 @@ composite_score <- function(
   # -- AVERAGE UNWEIGHTED -- #
   if(weight == "average"){
     
-    cs <- average_score(data = data,
-                        composite_list = composite_list,
-                        digits = 3,
-                        return_metrics = return_metrics,
-                        file = file)
+    cs <- average_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -160,11 +183,14 @@ composite_score <- function(
   
   if(weight == "correlation"){
     
-    cs <- correlation_score(data = data,
-                            composite_list = composite_list,
-                            digits = 3,
-                            return_metrics = return_metrics,
-                            file = file)
+    cs <- correlation_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -173,11 +199,14 @@ composite_score <- function(
   
   if(weight == "regression"){
     
-    cs <- regression_score(data = data,
-                           composite_list = composite_list,
-                           digits = 3,
-                           return_metrics = return_metrics,
-                           file = file)
+    cs <- regression_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -191,11 +220,14 @@ composite_score <- function(
   # -- STANDARD DEVIATION UPWEIGHT -- #
   if(weight == "sd_upweight"){
     
-    cs <- sd_upweight_score(data = data,
-                            composite_list = composite_list,
-                            digits = 3,
-                            return_metrics = return_metrics,
-                            file = file)
+    cs <- sd_upweight_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -203,11 +235,14 @@ composite_score <- function(
   # -- STANDARD DEVIATION DOWNWEIGHT -- #
   if(weight == "sd_downweight"){
     
-    cs <- sd_downweight_score(data = data,
-                              composite_list = composite_list,
-                              digits = 3,
-                              return_metrics = return_metrics,
-                              file = file)
+    cs <- sd_downweight_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -221,11 +256,14 @@ composite_score <- function(
   # -- MEDIAN SCORE -- #
   if(weight == "median"){
     
-    cs <- median_score(data = data,
-                       composite_list = composite_list,
-                       digits = 3,
-                       return_metrics = return_metrics,
-                       file = file)
+    cs <- median_score(
+      data = data,
+      composite_list = composite_list,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -233,12 +271,15 @@ composite_score <- function(
   # -- DISTANCE-TO-MEDIAN DECAY FUNCTION -- #
   if(weight == "median_decay"){
     
-    cs <- dismed_decay_score(data = data,
-                             composite_list = composite_list,
-                             decay_rate = decay_rate,
-                             digits = 3,
-                             return_metrics = return_metrics,
-                             file = file)
+    cs <- dismed_decay_score(
+      data = data,
+      composite_list = composite_list,
+      decay_rate = decay_rate,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
@@ -246,15 +287,50 @@ composite_score <- function(
   # -- DISTANCE-TO-MEDIAN GAUSSIAN FUNCTION -- #
   if(weight == "median_gauss"){
     
-    cs <- dismed_gauss_score(data = data,
-                             composite_list = composite_list,
-                             sigma = sigma,
-                             digits = 3,
-                             return_metrics = return_metrics,
-                             file = file)
+    cs <- dismed_gauss_score(
+      data = data,
+      composite_list = composite_list,
+      sigma = sigma,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
     
   }
   
+  
+  
+  
+  # ---------------------------------- #
+  # -- INFORMATION FAMILY WEIGHTING -- #
+  # ---------------------------------- #
+  
+  # -- MUTUAL INFORMATION SCORE -- #
+  if(weight == "mutual_info"){
+    
+    cs <- information_score(
+      data = data,
+      composite_list = composite_list,
+      entropy = entropy,
+      digits = 3,
+      return_metrics = return_metrics,
+      file = file,
+      name = name
+    )
+    
+  }
+  
+  # Return
   return(cs)
   
 }
+
+
+#' @rdname composite_score
+#' @export
+cscore <- composite_score
+
+#' @rdname composite_score
+#' @export
+cs <- composite_score

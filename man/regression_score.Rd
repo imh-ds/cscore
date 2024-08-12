@@ -9,7 +9,8 @@ regression_score(
   composite_list,
   digits = 3,
   return_metrics = FALSE,
-  file = NULL
+  file = NULL,
+  name = NULL
 )
 }
 \arguments{

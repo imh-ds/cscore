@@ -4,7 +4,7 @@
 \alias{export_metrics}
 \title{Export Metrics (Reliability & Validity)}
 \usage{
-export_metrics(metrics, digits, file)
+export_metrics(metrics, digits, name = NULL, file)
 }
 \arguments{
 \item{metrics}{A required list object. The list should contain an array for
