@@ -1,21 +1,27 @@
 #' Calculate Median Composite Scores
-#' 
-#' @description
-#' 
-#' Calculate the composite score for the median family of weighting schemas. For
-#' information on the specifics calculations, refer to the help documentations
-#' of \code{?median_score} (for median), \code{?dismed_decay_score} (for
-#' distance-to-median decay function), and \code{?dismed_gauss_score} (for
-#' distance-to-median gaussian function).
 #'
-#' Refer to help documentation \code{?calc_metrics} for information on how
-#' reliability and validity metrics are calculated.
-#' 
+#' @description Calculate the composite score for the mutual information family
+#'   of weighting schemas.
+#'
+#' @details For information on the specifics calculations, refer to the help
+#'   documentations of \code{?average_score} (for unweighted),
+#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
+#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
+#'   and \code{?information_score} (for mutual-information-weighted).
+#'
+#'   Specific to median weighted scoring, refer to the help documentations of
+#'   \code{?median_score} (for median), \code{?dismed_decay_score} (for
+#'   distance-to-median decay function), and \code{?dismed_gauss_score} (for
+#'   distance-to-median gaussian function).
+#'
+#'   Refer to help documentation \code{?calc_metrics} for information on how
+#'   reliability and validity metrics are calculated.
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param var A required vector of indicator column names.
-#' @param weight Required weighting schema. Schemas include
-#'   \code{c("median", "median_decay", "median_gauss")}
+#' @param weight Required weighting schema. Schemas include \code{c("median",
+#'   "median_decay", "median_gauss")}
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3.
 #' @param name A required string denoting the name of the composite variable.
@@ -30,7 +36,7 @@
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
-#'   
+#'
 #' @return If \code{return_metrics = FALSE}, an array of the composite score is
 #'   returned. If \code{return_metrics = TRUE}, a list is returned consisting
 #'   of:
@@ -38,32 +44,11 @@
 #'  \item{\code{composite_score}: }{An array with the calculated composite
 #'  variable.} \item{\code{composite_metrics}: }{A matrix loadings and weights
 #'  of the indicators.}
-#'  \item{\code{composite_validity}: }{A matrix of composite reliability and 
+#'  \item{\code{composite_validity}: }{A matrix of composite reliability and
 #'  validity metrics.}
 #' }
-#' 
-#' @examples
 #'
-#' data(grit)
-#' 
-#' # Specify a vector of indicators
-#' extraversion <- sprintf("e%01d", seq(10))
-#' 
-#' # Calculate median composite score
-#' calc_median_composite(data = grit,
-#'                       var = extraversion,
-#'                       weight = "median",
-#'                       return_metrics = FALSE)
-#' 
-#' # Calculate median composite scores, reliability, & validity
-#' calc_median_composite(data = grit,
-#'                       var = extraversion,
-#'                       weight = "median",
-#'                       name = "extraversion",
-#'                       digits = 3,
-#'                       return_metrics = TRUE)
-#'
-#' @export
+#' @noRd
 calc_median_composite <- function(
     data,
     var,
@@ -75,12 +60,10 @@ calc_median_composite <- function(
     return_metrics
 ) {
   
-  
   # -- DATA PREPARATION -- #
   
   # Get dataframe with just indicator vars
   df <- data[, var]
-  
   
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #

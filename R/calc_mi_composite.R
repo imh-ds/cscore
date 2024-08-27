@@ -1,16 +1,17 @@
 #' Calculate Mutual-Information Composite Scores
-#' 
-#' @description
-#' 
-#' Calculate the composite score for the mutual information family of weighting schemas.
-#' For information on the specifics calculations, refer to the help
-#' documentations of \code{?average_score} (for unweighted),
-#' \code{?correlation_score} (for correlation-weighted), and
-#' \code{?regression_score} (for regression-weighted).
 #'
-#' Refer to help documentation \code{?calc_metrics} for information on how
-#' reliability and validity metrics are calculated.
-#' 
+#' @description Calculate the composite score for the mutual information family
+#'   of weighting schemas.
+#'
+#' @details For information on the specifics calculations, refer to the help
+#'   documentations of \code{?average_score} (for unweighted),
+#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
+#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
+#'   and \code{?information_score} (for mutual-information-weighted).
+#'
+#'   Refer to help documentation \code{?calc_metrics} for information on how
+#'   reliability and validity metrics are calculated.
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param var A required vector of indicator column names.
@@ -24,13 +25,18 @@
 #'   stable estimate useful for small sample sizes or sparse data. \code{sg}
 #'   applies a Schurmann-Grassberger estimate of the Dirichlet probability
 #'   distribution to serve as an alternative to the Shrinkage approach.
+#' @param nmi_method A string value reflecting the method used for calculating
+#'   Normalized Mutual Information (NMI) values. \code{"average"} will normalize
+#'   MI values using the average entropies of variables A and B.
+#'   \code{"geometric"} will normalize MI values using the geometric mean of
+#'   entropies of variables A and B.
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3.
 #' @param name A required string denoting the name of the composite variable.
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
-#'   
+#'
 #' @return If \code{return_metrics = FALSE}, an array of the composite score is
 #'   returned. If \code{return_metrics = TRUE}, a list is returned consisting
 #'   of:
@@ -38,45 +44,22 @@
 #'  \item{\code{composite_score}: }{An array with the calculated composite
 #'  variable.} \item{\code{composite_metrics}: }{A matrix loadings and weights
 #'  of the indicators.}
-#'  \item{\code{composite_validity}: }{A matrix of composite reliability and 
+#'  \item{\code{composite_validity}: }{A matrix of composite reliability and
 #'  validity metrics.}
 #' }
-#' 
-#' @examples
 #'
-#' data(grit)
-#' 
-#' # Specify a vector of indicators
-#' extraversion <- sprintf("e%01d", seq(10))
-#' 
-#' # Calculate mutual information composite score
-#' calc_mi_composite(data = grit,
-#'                   var = extraversion,
-#'                   entropy = "emp",
-#'                   weight = "correlation",
-#'                   return_metrics = FALSE)
-#' 
-#' # Calculate mutual information composite score and metrics
-#' calc_mi_composite(data = grit,
-#'                   var = extraversion,
-#'                   entropy = "emp",
-#'                   name = "extraversion",
-#'                   digits = 3,
-#'                   return_metrics = TRUE)
-#'
-#' @export
+#' @noRd
 calc_mi_composite <- function(
   
   data,
   var,
   entropy = "emp",
+  nmi_method = "geometric",
   digits = 3,
   name = NULL,
   return_metrics  
   
 ) {
-  
-  
   
   # -- DATA PREPARATION -- #
   
@@ -98,13 +81,35 @@ calc_mi_composite <- function(
     
     for (j in i:ncol(df)) {
       
-      mi_matrix[j, i] <- infotheo::mutinformation(
+      # Calculate MI
+      mi_value <- infotheo::mutinformation(
         df[, i],
         df[, j]
       ) / sqrt(infotheo::entropy(df[, i], 
                                  method = entropy) * infotheo::entropy(df[, j], 
                                                                        method = entropy))
       
+      # Calculate entropy of var i and j
+      ent_i <- infotheo::entropy(df[, i],
+                                 method = entropy)
+      ent_j <- infotheo::entropy(df[, i],
+                                 method = entropy)
+      
+      # Calculate Normalized MI (NMI)
+      nmi <- if (nmi_method == "geometric") {
+        
+        # If NMI option is set to calculate using geometric mean entropy:
+        mi_value / sqrt(ent_i) * sqrt(ent_j)
+        
+      } else {
+        
+        # If NMI option is set to calculate using average entropy:
+        2 * mi_value / (ent_i + ent_j)
+        
+      }
+      
+      # Store in matrix
+      mi_matrix[j, i] <- nmi
       mi_matrix[i, j] <- mi_matrix[j, i]
       
     }

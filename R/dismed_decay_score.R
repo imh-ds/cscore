@@ -1,44 +1,44 @@
 #' Calculate Distance-to-Median Composite Scores & Metrics with Decay Function
 #'
-#' @description 
-#' 
-#' Create composite scores of scales by specifying the indicators that go into
-#' its respective composite variable. Composite scores are weighted based on the
-#' indicators' distances to the median of all indicators. Indicators with
-#' greater distance from the median (i.e., greater the absolute difference
-#' between the median and the indicator) are downweighted based on a decay
-#' function. Median composite scores are calculated as the median of the
-#' indicators:
+#' @description Create composite scores of scales by specifying the indicators
+#'   that go into its respective composite variable.
 #'
-#' \deqn{M = median(I[1], I[2], ..., I[n])}{M = median(I[1], I[2], ..., I[n])}
+#' @details Composite scores are weighted based on the indicators' distances to
+#'   the median of all indicators. Indicators with greater distance from the
+#'   median (i.e., greater the absolute difference between the median and the
+#'   indicator) are downweighted based on a decay function. Median composite
+#'   scores are calculated as the median of the indicators:
 #'
-#' If we denote the \eqn{j^{th}} indicator (\eqn{I}) for the \eqn{i^{th}} respondent
-#' as \eqn{I[ij]}, the distance-to-median calculation can be given as:
+#'   \deqn{M = median(I[1], I[2], ..., I[n])}{M = median(I[1], I[2], ..., I[n])}
 #'
-#' \deqn{D[ij] = |I[ij] - M|}{D[ij] = |I[ij] - M|}
+#'   If we denote the \eqn{j^{th}} indicator (\eqn{I}) for the \eqn{i^{th}}
+#'   respondent as \eqn{I[ij]}, the distance-to-median calculation can be given
+#'   as:
 #'
-#' Distance-to-median decay function applies the exponential decay rate to each
-#' distance to calculate the weights. Values close to the median (i.e., small
-#' distances) will have weights approaching 1, whereas values further from the
-#' median (i.e., large distances) will have weights approaching 0. The rate at
-#' which the weights decrease as the distance increases is determined by the
-#' \code{decay_rate}. A larger \code{decay_rate} results in a faster decrease
-#' (i.e., weights will approach 0 more quickly), whereas a smaller
-#' \code{decay_rate} results in a slower decrease (i.e., weights will stay
-#' closer to 1 for larger distances). The decay_rate therefore controls the
-#' weighting schema's sensitivity to the distance from the median. A higher
-#' \code{decay_rate} increases the influence of indicators closer to the median.
-#' A lower \code{decay_rate} mutes the effect of distance to the median, thereby
-#' placing more equal weight across all values regardless of their distance from
-#' the median. Denoting the decay rate as \eqn{\gamma}, the weight calculation
-#' can be given as:
-#' 
-#' \deqn{w[ij] = exp(-\gamma * D[ij])}{w[ij] = exp(-gamma * D[ij])}
-#' 
-#' Unlike covariance or standard deviation based weighting schemas, the median
-#' weighting schemas are unique to each respondent since it is possible for
-#' respondents to have different medians. The distance-to-median weights are
-#' normalized by dividing each weight by the mean of the weights: 
+#'   \deqn{D[ij] = |I[ij] - M|}{D[ij] = |I[ij] - M|}
+#'
+#'   Distance-to-median decay function applies the exponential decay rate to
+#'   each distance to calculate the weights. Values close to the median (i.e.,
+#'   small distances) will have weights approaching 1, whereas values further
+#'   from the median (i.e., large distances) will have weights approaching 0.
+#'   The rate at which the weights decrease as the distance increases is
+#'   determined by the \code{decay_rate}. A larger \code{decay_rate} results in
+#'   a faster decrease (i.e., weights will approach 0 more quickly), whereas a
+#'   smaller \code{decay_rate} results in a slower decrease (i.e., weights will
+#'   stay closer to 1 for larger distances). The decay_rate therefore controls
+#'   the weighting schema's sensitivity to the distance from the median. A
+#'   higher \code{decay_rate} increases the influence of indicators closer to
+#'   the median. A lower \code{decay_rate} mutes the effect of distance to the
+#'   median, thereby placing more equal weight across all values regardless of
+#'   their distance from the median. Denoting the decay rate as \eqn{\gamma},
+#'   the weight calculation can be given as:
+#'
+#'   \deqn{w[ij] = exp(-\gamma * D[ij])}{w[ij] = exp(-gamma * D[ij])}
+#'
+#'   Unlike covariance or standard deviation based weighting schemas, the median
+#'   weighting schemas are unique to each respondent since it is possible for
+#'   respondents to have different medians. The distance-to-median weights are
+#'   normalized by dividing each weight by the mean of the weights:
 #'
 #' \deqn{w[j] = \frac{w[j]}{\frac{1}{m} \sum_{k=1}^{m} w[k]}}{w[j] = w[j] / (1/m
 #' * sum(w[k] for k=1 to m))}
@@ -70,6 +70,7 @@
 #' @param file An optional file path. If specified, the results will be written
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
+#' @param name A required string denoting the name of the composite variable.
 #'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
 #'  dataframe, with additional columns appended at the end, is returned. These
@@ -77,11 +78,11 @@
 #'  \code{return_metrics = TRUE}, a list containing the following dataframes is
 #'  returned:
 #'  \itemize{
-#'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
-#'  variables.}
-#'  \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
-#'  \item{\strong{Validity}: }{A matrix of composite reliability and validity
-#'  metrics.}
+#'  \item \strong{Data}: A dataframe with the composite variables appended as new
+#'  variables.
+#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+#'  \item \strong{Validity}: A matrix of composite reliability and validity
+#'  metrics.
 #' }
 #'
 #' @examples
@@ -104,12 +105,12 @@
 #'   grit                  = c("consistency_interest", "perseverance_effort")
 #'
 #'  )
-#'                                    
+#'
 #' # Calculate distance-to-median decay composite scores
 #' dismed_decay_score(data = grit,
 #'                    composite_list = composite_list,
 #'                    decay_rate = 0.5)
-#'                             
+#'
 #' # Calculate distance-to-median decay composite scores, reliability, & validity
 #' dismed_decay_score(data = grit,
 #'                    composite_list = composite_list,
@@ -119,7 +120,7 @@
 #'                    file = "composite.xlsx")
 #'
 #' unlink("composite.xlsx")
-#' 
+#'
 #' @export
 dismed_decay_score <- function(
     data = .,

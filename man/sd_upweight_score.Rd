@@ -32,6 +32,8 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
@@ -40,29 +42,32 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
   \code{return_metrics = TRUE}, a list containing the following dataframes is
   returned:
  \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
+ \item \strong{Data}: A dataframe with the composite variables appended as new
+ variables.
+ \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+ \item \strong{Validity}: A matrix of composite reliability and validity
+ metrics.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. Standard Deviation upweighted composite
-scores are calculated by using the indicator's standard deviation as the
-weights. The indicators are multiplied by the inverse of their standard
-deviations normalized across all indicators. Standard deviations are
-therefore upweighted, i.e., indicators with larger standard deviations are
-weighted higher than indicators with smaller standard deviations.
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable.
+}
+\details{
+Standard Deviation upweighted composite scores are calculated by
+  using the indicator's standard deviation as the weights. The indicators are
+  multiplied by the inverse of their standard deviations normalized across
+  all indicators. Standard deviations are therefore upweighted, i.e.,
+  indicators with larger standard deviations are weighted higher than
+  indicators with smaller standard deviations.
 
-The standard deviation (\eqn{\sigma}) is calculated as normal:
+  The standard deviation (\eqn{\sigma}) is calculated as normal:
 
 \deqn{\sigma_i = \sqrt{\frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2}}{sd =
 sqrt((1 / (n - 1)) * sum((x[i] - mean(x))^2))}
 
-The standard deviations are then normalized by dividing each \eqn{\sigma} by
-the mean of the \eqn{\sigma}:
+  The standard deviations are then normalized by dividing each \eqn{\sigma}
+  by the mean of the \eqn{\sigma}:
 
 \deqn{\sigma[j] = \frac{\sigma[j]}{\frac{1}{m} \sum_{k=1}^{m} \sigma[k]}}{sigma[j] = sigma[j] / (1/m
 * sum(sigma[k] for k=1 to m))}
@@ -101,11 +106,11 @@ composite_list <- composite_list(
   grit                  = c("consistency_interest", "perseverance_effort")
 
  )
-                                   
+
 # Calculate correlation-weighted composite scores
 sd_upweight_score(data = grit,
                   composite_list = composite_list)
-                  
+
 # Calculate correlation-weighted composite scores, reliability, & validity
 sd_upweight_score(data = grit,
                   composite_list = composite_list,

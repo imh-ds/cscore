@@ -32,40 +32,45 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
- dataframe, with additional columns appended at the end, is returned. These
- new columns represent the calculated composite scores. If
- \code{return_metrics = TRUE}, a list containing the following dataframes is
- returned:
+  dataframe, with additional columns appended at the end, is returned. These
+  new columns represent the calculated composite scores. If
+  \code{return_metrics = TRUE}, a list containing the following dataframes is
+  returned:
  \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
+ \item \strong{Data}: A dataframe with the composite variables appended as new
+ variables.
+ \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+ \item \strong{Validity}: A matrix of composite reliability and validity
+ metrics.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. Median composite scores are
-calculated as the median of the indicators:
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable.
+}
+\details{
+Median composite scores are calculated as the median of the
+  indicators:
 
-\deqn{M_i = median(I_1, I_2, ..., I_n)}
+  \deqn{M_i = median(I_1, I_2, ..., I_n)}
 
-If \code{return_metrics} is set to \code{TRUE}, the function also returns
-composite reliability and validity metrics, as well as indicator-level
-loadings and weights. See the documentation \code{?calc_metrics} for the
-calculation and reporting of reliability and validity measures. Because the
-simple median schema does not apply any particular weighting on the
-indicators, the indicator-level weights are assigned a value of 1.
+  If \code{return_metrics} is set to \code{TRUE}, the function also returns
+  composite reliability and validity metrics, as well as indicator-level
+  loadings and weights. See the documentation \code{?calc_metrics} for the
+  calculation and reporting of reliability and validity measures. Because the
+  simple median schema does not apply any particular weighting on the
+  indicators, the indicator-level weights are assigned a value of 1.
 
-If \code{file} is specified with a file path, this function will
-automatically write a formatted excel workbook of the returned output. The
-format is consistent with what is typically reported in APA 7th edition, and
-can be copy and pasted directly into a Word document or similar document
-software.
+  If \code{file} is specified with a file path, this function will
+  automatically write a formatted excel workbook of the returned output. The
+  format is consistent with what is typically reported in APA 7th edition,
+  and can be copy and pasted directly into a Word document or similar
+  document software.
 }
 \examples{
 
@@ -87,11 +92,11 @@ composite_list <- composite_list(
   grit                  = c("consistency_interest", "perseverance_effort")
 
  )
-                                   
+
 # Calculate median composite scores
 median_score(data = grit,
              composite_list = composite_list)
-                            
+
 # Calculate median composite scores, reliability, & validity
 median_score(data = grit,
              composite_list = composite_list,

@@ -32,41 +32,46 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
- dataframe, with additional columns appended at the end, is returned. These
- new columns represent the calculated composite scores. If
- \code{return_metrics = TRUE}, a list containing the following dataframes is
- returned:
+  dataframe, with additional columns appended at the end, is returned. These
+  new columns represent the calculated composite scores. If
+  \code{return_metrics = TRUE}, a list containing the following dataframes is
+  returned:
  \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
+ \item \strong{Data}: A dataframe with the composite variables appended as new
+ variables.
+ \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+ \item \strong{Validity}: A matrix of composite reliability and validity
+ metrics.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. Unweighted composite scores are
-calculated by taking the straight average of the indicators:
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable.
+}
+\details{
+Unweighted composite scores are calculated by taking the straight
+  average of the indicators:
 
 \deqn{\bar{cs}_a = \frac{1}{n} \sum_{i=1}^{n} I[i]}{composite_score = 1/n *
 sum(I[i]) for i=1 to n)}
 
-where \eqn{\bar{cs}_a} is the unweighted average composite score and \eqn{I}
-is the indicator variable. If \code{return_metrics} is set to \code{TRUE},
-the function also returns composite reliability and validity metrics, as well
-as indicator-level loadings and weights. See the documentation
-\code{?calc_metrics} for the calculation and reporting of reliability and
-validity measures.
+  where \eqn{\bar{cs}_a} is the unweighted average composite score and
+  \eqn{I} is the indicator variable. If \code{return_metrics} is set to
+  \code{TRUE}, the function also returns composite reliability and validity
+  metrics, as well as indicator-level loadings and weights. See the
+  documentation \code{?calc_metrics} for the calculation and reporting of
+  reliability and validity measures.
 
-If \code{file} is specified with a file path, this function will
-automatically write a formatted excel workbook of the returned output. The
-format is consistent with what is typically reported in APA 7th edition, and
-can be copy and pasted directly into a Word document or similar document
-software.
+  If \code{file} is specified with a file path, this function will
+  automatically write a formatted excel workbook of the returned output. The
+  format is consistent with what is typically reported in APA 7th edition,
+  and can be copy and pasted directly into a Word document or similar
+  document software.
 }
 \examples{
 
@@ -92,7 +97,7 @@ composite_list <- composite_list(
 # Calculate unweighted composite scores
 average_score(data = grit,
               composite_list = composite_list)
-                  
+
 # Calculate unweighted composite scores, reliability, & validity
 average_score(data = grit,
               composite_list = composite_list,

@@ -1,31 +1,32 @@
 #' Calculate Standard Deviation Upweighted Composite Scores
-#' 
-#' @description
-#' Create composite scores of scales by specifying the indicators that go into
-#' each respective composite variable. Standard Deviation upweighted composite
-#' scores are calculated by using the indicator's standard deviation as the
-#' weights. The indicators are multiplied by the inverse of their standard
-#' deviations normalized across all indicators. Standard deviations are
-#' therefore upweighted, i.e., indicators with larger standard deviations are
-#' weighted higher than indicators with smaller standard deviations.
-#' 
-#' The standard deviation (\eqn{\sigma}) is calculated as normal:
-#' 
+#'
+#' @description Create composite scores of scales by specifying the indicators
+#'   that go into each respective composite variable.
+#'
+#' @details Standard Deviation upweighted composite scores are calculated by
+#'   using the indicator's standard deviation as the weights. The indicators are
+#'   multiplied by the inverse of their standard deviations normalized across
+#'   all indicators. Standard deviations are therefore upweighted, i.e.,
+#'   indicators with larger standard deviations are weighted higher than
+#'   indicators with smaller standard deviations.
+#'
+#'   The standard deviation (\eqn{\sigma}) is calculated as normal:
+#'
 #' \deqn{\sigma_i = \sqrt{\frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2}}{sd =
 #' sqrt((1 / (n - 1)) * sum((x[i] - mean(x))^2))}
-#' 
-#' The standard deviations are then normalized by dividing each \eqn{\sigma} by
-#' the mean of the \eqn{\sigma}:
+#'
+#'   The standard deviations are then normalized by dividing each \eqn{\sigma}
+#'   by the mean of the \eqn{\sigma}:
 #'
 #' \deqn{\sigma[j] = \frac{\sigma[j]}{\frac{1}{m} \sum_{k=1}^{m} \sigma[k]}}{sigma[j] = sigma[j] / (1/m
 #' * sum(sigma[k] for k=1 to m))}
-#' 
+#'
 #' where \eqn{m} is the number of indicators, and the sum is taken over all
 #' \eqn{k}. The SD-weighted composite score is then calculated as follows:
-#' 
+#'
 #' \deqn{\bar{cs}_u = \frac{1}{n} \sum_{i=1}^{n} I[i] * w_i}{composite_score_u = 1/n
 #' * sum(df[i] * w_i for i=1 to n)}
-#' 
+#'
 #' where \eqn{\bar{cs}_u} is the SD upweighted composite score, \eqn{I} is the
 #' raw indicator input, and \eqn{w_i} is the same value as the normalized
 #' \eqn{\sigma_i}. If \code{return_metrics} is set to \code{TRUE}, the function
@@ -33,7 +34,7 @@
 #' indicator-level loadings and weights. See the documentation
 #' \code{?calc_metrics} for the calculation and reporting of reliability and
 #' validity measures.
-#' 
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param composite_list A required \code{composite_list} object. Each name in
@@ -48,24 +49,25 @@
 #' @param file An optional file path. If specified, the results will be written
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
-#' 
+#' @param name A required string denoting the name of the composite variable.
+#'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
 #'   dataframe, with additional columns appended at the end, is returned. These
 #'   new columns represent the calculated composite scores. If
 #'   \code{return_metrics = TRUE}, a list containing the following dataframes is
 #'   returned:
 #'  \itemize{
-#'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
-#'  variables.}
-#'  \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
-#'  \item{\strong{Validity}: }{A matrix of composite reliability and validity
-#'  metrics.}
+#'  \item \strong{Data}: A dataframe with the composite variables appended as new
+#'  variables.
+#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+#'  \item \strong{Validity}: A matrix of composite reliability and validity
+#'  metrics.
 #' }
-#' 
+#'
 #' @examples
-#' 
+#'
 #' data(grit)
-#' 
+#'
 #' # Specify the named list with composite names and their respective indicators
 #' composite_list <- composite_list(
 #'
@@ -82,20 +84,20 @@
 #'   grit                  = c("consistency_interest", "perseverance_effort")
 #'
 #'  )
-#'                                    
+#'
 #' # Calculate correlation-weighted composite scores
 #' sd_upweight_score(data = grit,
 #'                   composite_list = composite_list)
-#'                   
+#'
 #' # Calculate correlation-weighted composite scores, reliability, & validity
 #' sd_upweight_score(data = grit,
 #'                   composite_list = composite_list,
 #'                   digits = 3,
 #'                   return_metrics = TRUE,
 #'                   file = "composite.xlsx")
-#' 
+#'
 #' unlink("composite.xlsx")
-#' 
+#'
 #' @export
 sd_upweight_score <- function(
     data = .,

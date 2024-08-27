@@ -1,11 +1,9 @@
 #' Export Metrics (Reliability & Validity)
-#' 
-#' @description
-#' 
-#' A function to export a \code{metrics} object as a formatted excel workbook to
-#' the specified \code{file} path. The format is consistent with what is
-#' typically reported in APA 7th edition, and can be copy and pasted directly
-#' into a Word document or similar document software.
+#'
+#' @description A function to export a \code{metrics} object as a formatted
+#'   excel workbook to the specified \code{file} path. The format is consistent
+#'   with what is typically reported in APA 7th edition, and can be copy and
+#'   pasted directly into a Word document or similar document software.
 #'
 #' @param metrics A required list object. The list should contain an array for
 #'   composite scores under \code{data}, a data frame of indicator loadings and
@@ -13,11 +11,12 @@
 #'   \code{validity}.
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3.
+#' @param name An optional string denoting the study/analysis name.
 #' @param file A required file path. If specified, the results will be written
 #'   as a formatted excel workbook.
 #'
 #' @return A formatted excel workbook saved to specified file path.
-#' 
+#'
 #' @export
 export_metrics <- function(
     

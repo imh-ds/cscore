@@ -32,6 +32,8 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
@@ -40,54 +42,57 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
   \code{return_metrics = TRUE}, a list containing the following dataframes is
   returned:
  \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
+ \item \strong{Data}: A dataframe with the composite variables appended as new
+ variables.
+ \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+ \item \strong{Validity}: A matrix of composite reliability and validity
+ metrics.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. Regression-weighted composite scores are
-calculated by fitting a linear model where the correlation-weighted composite
-scores are regressed on the indicators. The indicators are multiplied by
-their respective regression weights to calculate the predicted values in the
-linear model, which represent the regression-weighted composite scores.
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable.
+}
+\details{
+Regression-weighted composite scores are calculated by fitting a
+  linear model where the correlation-weighted composite scores are regressed
+  on the indicators. The indicators are multiplied by their respective
+  regression weights to calculate the predicted values in the linear model,
+  which represent the regression-weighted composite scores.
 
-The regression weights (\eqn{w}) are calculated by fitting a linear model
-with the correlation-weighted composite score (\eqn{\bar{cs}_c}) as the
-outcome and the indicators (\eqn{I_{1...n}}) as the predictors (see help
-document for \code{?correlation_score} for information on the calculation of
-the correlation-weighted composite score). The standardized coefficients
-(\eqn{\beta_{1...n}}) from this model are used as the weights:
+  The regression weights (\eqn{w}) are calculated by fitting a linear model
+  with the correlation-weighted composite score (\eqn{\bar{cs}_c}) as the
+  outcome and the indicators (\eqn{I_{1...n}}) as the predictors (see help
+  document for \code{?correlation_score} for information on the calculation
+  of the correlation-weighted composite score). The standardized coefficients
+  (\eqn{\beta_{1...n}}) from this model are used as the weights:
 
 \deqn{\bar{cs}_c = \beta_0 + \beta_1I_1 + \beta_2I_2 + ... + \epsilon}{cs_c =
 beta_0 + beta_1I_1 + beta_2I_2 + ... + error}
 
-The regression weights are simply the normalized beta coefficient:
+  The regression weights are simply the normalized beta coefficient:
 
 \deqn{w_i = \frac{\beta_i}{\frac{1}{m}
 \sum_{k=1}^{m} \beta_k}}{beta_i = beta_i / (1/m * sum(beta_k) for k=1 to m)}
 
-where \eqn{m} is the number of indicators, and the sum is taken over all
-\eqn{k}. Finally, the regression-weighted composite score is calculated as
-follows:
+  where \eqn{m} is the number of indicators, and the sum is taken over all
+  \eqn{k}. Finally, the regression-weighted composite score is calculated as
+  follows:
 
 \deqn{\bar{cs}_r = \frac{1}{n} \sum_{i=1}^{n} I[i] *
 w_i}{composite_score = 1/n * sum(I[i] * w_i) for i=1 to n)}
 
-where \eqn{\bar{cs}_r} is the regression weighted composite score. If
-\code{return_metrics} is set to \code{TRUE}, the function also returns
-composite reliability and validity metrics, as well as indicator-level
-loadings and weights. See the documentation \code{?calc_metrics} for
-the calculation and reporting of reliability and validity measures.
+  where \eqn{\bar{cs}_r} is the regression weighted composite score. If
+  \code{return_metrics} is set to \code{TRUE}, the function also returns
+  composite reliability and validity metrics, as well as indicator-level
+  loadings and weights. See the documentation \code{?calc_metrics} for the
+  calculation and reporting of reliability and validity measures.
 
-If \code{file} is specified with a file path, this function will
-automatically write a formatted excel workbook of the returned output. The
-format is consistent with what is typically reported in APA 7th edition, and
-can be copy and pasted directly into a Word document or similar document
-software.
+  If \code{file} is specified with a file path, this function will
+  automatically write a formatted excel workbook of the returned output. The
+  format is consistent with what is typically reported in APA 7th edition,
+  and can be copy and pasted directly into a Word document or similar
+  document software.
 }
 \examples{
 
@@ -113,7 +118,7 @@ composite_list <- composite_list(
 # Calculate regression-weighted composite scores
 regression_score(data = grit,
                  composite_list = composite_list)
-                                     
+
 # Calculate regression-weighted composite scores, reliability, & validity
 regression_score(data = grit,
                  composite_list = composite_list,

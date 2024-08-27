@@ -1,21 +1,22 @@
 #' Calculate Standard Deviation Composite Scores
 #'
-#' @description
-#' 
-#' Calculate the composite score for the standard deviation family of weighting
-#' schemas. For information on the specifics calculations, refer to the help
-#' documentations of \code{?sd_upweight_score} (for upweighted standard
-#' deviation) and \code{?sd_downweight_score} (for downweighted standard
-#' deviation).
+#' @description Calculate the composite score for the mutual information family
+#'   of weighting schemas.
 #'
-#' Refer to help documentation \code{?calc_metrics} for information on how
-#' reliability and validity metrics are calculated.
-#' 
+#' @details For information on the specifics calculations, refer to the help
+#'   documentations of \code{?average_score} (for unweighted),
+#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
+#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
+#'   and \code{?information_score} (for mutual-information-weighted).
+#'
+#'   Refer to help documentation \code{?calc_metrics} for information on how
+#'   reliability and validity metrics are calculated.
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param var A required vector of indicator column names.
-#' @param weight Required weighting schema. Schemas include
-#'   \code{c("upweight", "downweight")}
+#' @param weight Required weighting schema. Schemas include \code{c("upweight",
+#'   "downweight")}
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3.
 #' @param name A required string denoting the name of the composite variable.
@@ -30,32 +31,11 @@
 #'  \item{\code{composite_score}: }{An array with the calculated composite
 #'  variable.} \item{\code{composite_metrics}: }{A matrix loadings and weights
 #'  of the indicators.}
-#'  \item{\code{composite_validity}: }{A matrix of composite reliability and 
+#'  \item{\code{composite_validity}: }{A matrix of composite reliability and
 #'  validity metrics.}
 #' }
-#' 
-#' @examples
 #'
-#' data(grit)
-#' 
-#' # Specify a vector of indicators
-#' extraversion <- sprintf("e%01d", seq(10))
-#' 
-#' # Calculate correlation-weighted composite score
-#' calc_sd_composite(data = grit,
-#'                   var = extraversion,
-#'                   weight = "sd_upweight",
-#'                   return_metrics = FALSE)
-#' 
-#' # Calculate correlation-weighted composite score and metrics
-#' calc_sd_composite(data = grit,
-#'                   var = extraversion,
-#'                   weight = "sd_upweight",
-#'                   name = "extraversion",
-#'                   digits = 3,
-#'                   return_metrics = TRUE)
-#'
-#' @export
+#' @noRd
 calc_sd_composite <- function(
     data,
     var,
@@ -65,12 +45,10 @@ calc_sd_composite <- function(
     return_metrics
 ) {
   
-  
   # -- DATA PREPARATION -- #
   
   # Select the numeric variables
   df <- data[, var]
-  
 
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #

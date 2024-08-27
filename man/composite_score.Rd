@@ -14,6 +14,7 @@ composite_score(
   decay_rate = 0.5,
   sigma = 0.5,
   entropy = "emp",
+  nmi_method = "geometric",
   return_metrics = FALSE,
   file = NULL,
   name = NULL
@@ -27,6 +28,7 @@ cscore(
   decay_rate = 0.5,
   sigma = 0.5,
   entropy = "emp",
+  nmi_method = "geometric",
   return_metrics = FALSE,
   file = NULL,
   name = NULL
@@ -40,6 +42,7 @@ cs(
   decay_rate = 0.5,
   sigma = 0.5,
   entropy = "emp",
+  nmi_method = "geometric",
   return_metrics = FALSE,
   file = NULL,
   name = NULL
@@ -91,6 +94,12 @@ stable estimate useful for small sample sizes or sparse data. \code{sg}
 applies a Schurmann-Grassberger estimate of the Dirichlet probability
 distribution to serve as an alternative to the Shrinkage approach.}
 
+\item{nmi_method}{A string value reflecting the method used for calculating
+Normalized Mutual Information (NMI) values. \code{"average"} will normalize
+MI values using the average entropies of variables A and B.
+\code{"geometric"} will normalize MI values using the geometric mean of
+entropies of variables A and B.}
+
 \item{return_metrics}{Logic to determine whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with
 reliability and validity metrics.}
@@ -98,6 +107,8 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
@@ -106,11 +117,11 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
   \code{return_metrics = TRUE}, a list containing the following dataframes is
   returned:
  \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
+ \item \strong{Data}: A dataframe with the composite variables appended as new
+ variables.
+ \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+ \item \strong{Validity}: A matrix of composite reliability and validity
+ metrics.
 }
 }
 \description{

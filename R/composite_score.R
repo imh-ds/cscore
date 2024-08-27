@@ -44,12 +44,18 @@
 #'   stable estimate useful for small sample sizes or sparse data. \code{sg}
 #'   applies a Schurmann-Grassberger estimate of the Dirichlet probability
 #'   distribution to serve as an alternative to the Shrinkage approach.
+#' @param nmi_method A string value reflecting the method used for calculating
+#'   Normalized Mutual Information (NMI) values. \code{"average"} will normalize
+#'   MI values using the average entropies of variables A and B.
+#'   \code{"geometric"} will normalize MI values using the geometric mean of
+#'   entropies of variables A and B.
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
 #' @param file An optional file path. If specified, the results will be written
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
+#' @param name An optional string denoting the name of the study/analysis.
 #'
 #' @importFrom magrittr %>%
 #'
@@ -59,11 +65,11 @@
 #'   \code{return_metrics = TRUE}, a list containing the following dataframes is
 #'   returned:
 #'  \itemize{
-#'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
-#'  variables.}
-#'  \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
-#'  \item{\strong{Validity}: }{A matrix of composite reliability and validity
-#'  metrics.}
+#'  \item \strong{Data}: A dataframe with the composite variables appended as new
+#'  variables.
+#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+#'  \item \strong{Validity}: A matrix of composite reliability and validity
+#'  metrics.
 #' }
 #'
 #' @examples
@@ -154,15 +160,14 @@ composite_score <- function(
     decay_rate = 0.5,
     sigma = 0.5,
     entropy = "emp",
+    nmi_method = "geometric",
     return_metrics = FALSE,
     file = NULL,
     name = NULL
 ){
   
-  
-  # --------------------------------- #
-  # -- COVARIANCE FAMILY WEIGHTING -- #
-  # --------------------------------- #
+
+  # COVARIANCE FAMILY WEIGHTING ---------------------------------------------
   
   # -- AVERAGE UNWEIGHTED -- #
   if(weight == "average"){
@@ -210,12 +215,8 @@ composite_score <- function(
     
   }
   
-  
-  
-  # ----------------------------------------- #
-  # -- STANDARD DEVIATION FAMILY WEIGHTING -- #
-  # ----------------------------------------- #
-  
+
+  # STANDARD DEVIATION FAMILY WEIGHTING -------------------------------------
   
   # -- STANDARD DEVIATION UPWEIGHT -- #
   if(weight == "sd_upweight"){
@@ -247,11 +248,8 @@ composite_score <- function(
   }
   
   
-  
-  # ----------------------------- #
-  # -- MEDIAN FAMILY WEIGHTING -- #
-  # ----------------------------- #
-  
+
+  # MEDIAN FAMILY WEIGHTING -------------------------------------------------
   
   # -- MEDIAN SCORE -- #
   if(weight == "median"){
@@ -301,10 +299,8 @@ composite_score <- function(
   
   
   
-  
-  # ---------------------------------- #
-  # -- INFORMATION FAMILY WEIGHTING -- #
-  # ---------------------------------- #
+
+  # INFORMATION FAMILY WEIGHTING --------------------------------------------
   
   # -- MUTUAL INFORMATION SCORE -- #
   if(weight == "mutual_info"){
@@ -313,6 +309,7 @@ composite_score <- function(
       data = data,
       composite_list = composite_list,
       entropy = entropy,
+      nmi_method = nmi_method,
       digits = 3,
       return_metrics = return_metrics,
       file = file,

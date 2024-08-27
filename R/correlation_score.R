@@ -1,28 +1,28 @@
 #' Calculate Correlation-Weighted Composite Scores
 #'
-#' @description
+#' @description Create composite scores of scales by specifying the indicators
+#'   that go into each respective composite variable.
 #'
-#' Create composite scores of scales by specifying the indicators that go into
-#' each respective composite variable. Composite scores are calculated as the
-#' correlation-weighted mean of the indicators.
+#' @details Composite scores are calculated as the correlation-weighted mean of
+#'   the indicators.
 #'
-#' Each indicator's correlation weight (\eqn{w}) is calculated as its average
-#' correlation with all other indicators. A correlation matrix is first computed
-#' using all indicators of the composite variable to obtain all possible
-#' combinations of pairwise bivariate correlations, such that a correlation
-#' matrix is calculated where the entry in the i-th row and j-th column is the
-#' correlation between the i-th and j-th indicators. The diagonal of the
-#' correlation matrix (i.e., correlation of i-th indicator to itself) are set to
-#' \code{NA} to remove self-correlations. Indicator weight calculation is then
-#' mathematically represented as:
+#'   Each indicator's correlation weight (\eqn{w}) is calculated as its average
+#'   correlation with all other indicators. A correlation matrix is first
+#'   computed using all indicators of the composite variable to obtain all
+#'   possible combinations of pairwise bivariate correlations, such that a
+#'   correlation matrix is calculated where the entry in the i-th row and j-th
+#'   column is the correlation between the i-th and j-th indicators. The
+#'   diagonal of the correlation matrix (i.e., correlation of i-th indicator to
+#'   itself) are set to \code{NA} to remove self-correlations. Indicator weight
+#'   calculation is then mathematically represented as:
 #'
 #' \deqn{w[j] = \frac{1}{n} \sum_{i=1}^{n} cor\_matrix[i, j]}{w[j] = 1/n *
 #' sum(cor_matrix[i, j] for i=1 to n)}
 #'
-#' where \eqn{n} is the number of rows in \eqn{cor\_matrix}, and the sum is
-#' taken over all \eqn{i} such that \eqn{cor\_matrix[i, j]} is not \code{NA}.
-#' The correlation weights are then normalized by dividing each weight by the
-#' mean of the weights:
+#'   where \eqn{n} is the number of rows in \eqn{cor\_matrix}, and the sum is
+#'   taken over all \eqn{i} such that \eqn{cor\_matrix[i, j]} is not \code{NA}.
+#'   The correlation weights are then normalized by dividing each weight by the
+#'   mean of the weights:
 #'
 #' \deqn{w[j] = \frac{w[j]}{\frac{1}{m} \sum_{k=1}^{m} w[k]}}{w[j] = w[j] / (1/m
 #' * sum(w[k] for k=1 to m))}
@@ -61,6 +61,7 @@
 #' @param file An optional file path. If specified, the results will be written
 #'   as a formatted excel workbook. This argument is only relevant if
 #'   \code{return_metrics = TRUE}.
+#' @param name A required string denoting the name of the composite variable.
 #'
 #' @return If \code{return_metrics = FALSE}, a dataframe identical to the input
 #'   dataframe, with additional columns appended at the end, is returned. These
@@ -68,11 +69,11 @@
 #'   \code{return_metrics = TRUE}, a list containing the following dataframes is
 #'   returned:
 #'  \itemize{
-#'  \item{\strong{Data}: }{A dataframe with the composite variables appended as new
-#'  variables.}
-#'  \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
-#'  \item{\strong{Validity}: }{A matrix of composite reliability and validity
-#'  metrics.}
+#'  \item \strong{Data}: A dataframe with the composite variables appended as new
+#'  variables.
+#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+#'  \item \strong{Validity}: A matrix of composite reliability and validity
+#'  metrics.
 #' }
 #'
 #' @examples

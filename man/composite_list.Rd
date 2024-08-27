@@ -13,20 +13,20 @@ clist(...)
 cl(...)
 }
 \arguments{
-\item{...}{Required named objects. Each vector should include the columns 
+\item{...}{Required named objects. Each vector should include the columns
 representing the indicator variables.}
 }
 \value{
 Two lists of lower and higher-order named composite vectors.
 }
 \description{
-A duplicate of base R's \code{list} function. Create a list of composite
-variable named vectors by specifying their corresponding indicator items. 
-Composite variables with indicators comprising the names of other composite
-variables are automatically categorized as higher-order composites. These 
-are separated into its own \code{higher} list of composite vectors. The 
-remaining composite variables are allocated into the \code{lower} list of 
-composite vectors.
+A duplicate of base R's \code{list} function. Create a list of
+  composite variable named vectors by specifying their corresponding
+  indicator items. Composite variables with indicators comprising the names
+  of other composite variables are automatically categorized as higher-order
+  composites. These are separated into its own \code{higher} list of
+  composite vectors. The remaining composite variables are allocated into the
+  \code{lower} list of composite vectors.
 }
 \examples{
 
@@ -42,10 +42,10 @@ composite_list <- composite_list(
   conscientiousness     = sprintf("c\%01d", seq(10)),
   openness              = sprintf("o\%01d", seq(10)),
   consistency_interest  = sprintf("gs\%01d", c(2,3,5,7,8,11)),
-  perseverance_effort   = sprintf("gs\%01d", c(1,4,6,9,10,12))
-  
+  perseverance_effort   = sprintf("gs\%01d", c(1,4,6,9,10,12)),
+
   # Higher-order composites
-  grit                  = c("consistency_interest", "perseverance_effort"),
+  grit                  = c("consistency_interest", "perseverance_effort")
 
  )
 

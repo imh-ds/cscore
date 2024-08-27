@@ -15,6 +15,8 @@ weights under \code{metrics}, and composite validity value under
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3.}
 
+\item{name}{A required string denoting the study/analysis name.}
+
 \item{file}{A required file path. If specified, the results will be written
 as a formatted excel workbook.}
 }
@@ -22,8 +24,8 @@ as a formatted excel workbook.}
 A formatted excel workbook saved to specified file path.
 }
 \description{
-A function to export a \code{metrics} object as a formatted excel workbook to
-the specified \code{file} path. The format is consistent with what is
-typically reported in APA 7th edition, and can be copy and pasted directly
-into a Word document or similar document software.
+A function to export a \code{metrics} object as a formatted
+  excel workbook to the specified \code{file} path. The format is consistent
+  with what is typically reported in APA 7th edition, and can be copy and
+  pasted directly into a Word document or similar document software.
 }

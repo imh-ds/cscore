@@ -1,16 +1,17 @@
 #' Calculate Covariance Composite Scores
-#' 
-#' @description
-#' 
-#' Calculate the composite score for the covariance family of weighting schemas.
-#' For information on the specifics calculations, refer to the help
-#' documentations of \code{?average_score} (for unweighted),
-#' \code{?correlation_score} (for correlation-weighted), and
-#' \code{?regression_score} (for regression-weighted).
 #'
-#' Refer to help documentation \code{?calc_metrics} for information on how
-#' reliability and validity metrics are calculated.
-#' 
+#' @description Calculate the composite score for the mutual information family
+#'   of weighting schemas.
+#'
+#' @details For information on the specifics calculations, refer to the help
+#'   documentations of \code{?average_score} (for unweighted),
+#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
+#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
+#'   and \code{?information_score} (for mutual-information-weighted).
+#'
+#'   Refer to help documentation \code{?calc_metrics} for information on how
+#'   reliability and validity metrics are calculated.
+#'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
 #' @param var A required vector of indicator column names.
@@ -22,7 +23,7 @@
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
-#'   
+#'
 #' @return If \code{return_metrics = FALSE}, an array of the composite score is
 #'   returned. If \code{return_metrics = TRUE}, a list is returned consisting
 #'   of:
@@ -30,32 +31,11 @@
 #'  \item{\code{composite_score}: }{An array with the calculated composite
 #'  variable.} \item{\code{composite_metrics}: }{A matrix loadings and weights
 #'  of the indicators.}
-#'  \item{\code{composite_validity}: }{A matrix of composite reliability and 
+#'  \item{\code{composite_validity}: }{A matrix of composite reliability and
 #'  validity metrics.}
 #' }
-#' 
-#' @examples
 #'
-#' data(grit)
-#' 
-#' # Specify a vector of indicators
-#' extraversion <- sprintf("e%01d", seq(10))
-#' 
-#' # Calculate correlation-weighted composite score
-#' calc_cov_composite(data = grit,
-#'                    var = extraversion,
-#'                    weight = "correlation",
-#'                    return_metrics = FALSE)
-#' 
-#' # Calculate correlation-weighted composite score and metrics
-#' calc_cov_composite(data = grit,
-#'                    var = extraversion,
-#'                    weight = "correlation",
-#'                    name = "extraversion",
-#'                    digits = 3,
-#'                    return_metrics = TRUE)
-#'
-#' @export
+#' @noRd
 calc_cov_composite <- function(
     data,
     var,
@@ -65,12 +45,10 @@ calc_cov_composite <- function(
     return_metrics
 ) {
   
-  
   # -- DATA PREPARATION -- #
   
   # Get dataframe with just indicator vars
   df <- data[, var]
-  
 
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #

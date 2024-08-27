@@ -8,6 +8,7 @@ information_score(
   data = .,
   composite_list,
   entropy = "emp",
+  nmi_method = "geometric",
   digits = 3,
   return_metrics = FALSE,
   file = NULL,
@@ -23,6 +24,23 @@ the list represents a composite variable, and the corresponding vector
 contains the column names that are associated with the indicators
 comprising said composite variable.}
 
+\item{entropy}{A string value reflecting the mutual information entropy
+estimator from the \code{infotheo} package. Four estimators are available:
+\code{emp} to compute the entropy of the empirical probability
+distribution. Empirical entropy is suitable for simple calculations without
+corrections. \code{mm} applies an asymptotic bias-corrected estimator
+making it suitable for small sample sizes. \code{shrink} applies a
+shrinkage estimate of the Dirichlet probability distribution to provide a
+stable estimate useful for small sample sizes or sparse data. \code{sg}
+applies a Schurmann-Grassberger estimate of the Dirichlet probability
+distribution to serve as an alternative to the Shrinkage approach.}
+
+\item{nmi_method}{A string value reflecting the method used for calculating
+Normalized Mutual Information (NMI) values. \code{"average"} will normalize
+MI values using the average entropies of variables A and B.
+\code{"geometric"} will normalize MI values using the geometric mean of
+entropies of variables A and B.}
+
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3. This argument is only relevant if \code{return_metrics = TRUE}.}
 
@@ -33,43 +51,54 @@ reliability and validity metrics.}
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
+
+\item{name}{A required string denoting the name of the composite variable.}
 }
 \value{
-If \code{return_metrics = FALSE}, a dataframe identical to the input
-  dataframe, with additional columns appended at the end, is returned. These
-  new columns represent the calculated composite scores. If
-  \code{return_metrics = TRUE}, a list containing the following dataframes is
-  returned:
- \itemize{
- \item{\strong{Data}: }{A dataframe with the composite variables appended as new
- variables.}
- \item{\strong{Metrics}: }{A matrix of indicator loadings and weights metrics.}
- \item{\strong{Validity}: }{A matrix of composite reliability and validity
- metrics.}
-}
+
 }
 \description{
-Create composite scores of scales by specifying the indicators that go into
-each respective composite variable. Composite scores are calculated as the
-information-weighted mean of the indicators.
+Create composite scores of scales by specifying the indicators
+  that go into each respective composite variable.
+}
+\details{
+Composite scores are calculated as the information-weighted mean of
+  the indicators.
 
-Each indicator's information weight (\eqn{w}) is calculated as its average
-mutual information with all other indicators. An information matrix is first
-computed using all indicators of the composite variable to obtain all
-possible combinations of pairwise mutual information, such that the
-information matrix is calculated where the entry in the i-th row and j-th
-column is the mutual information between the i-th and j-th indicators. The
-diagonal of the information matrix (i.e., mutual information of i-th
-indicator to itself) are set to \code{NA} to remove perfect information.
-Indicator weight calculation is then mathematically represented as:
+  Each indicator's information weight (\eqn{w}) is calculated as its average
+  mutual information with all other indicators. An information matrix is
+  first computed using all indicators of the composite variable to obtain all
+  possible combinations of pairwise mutual information, such that the
+  information matrix is calculated where the entry in the i-th row and j-th
+  column is the mutual information between the i-th and j-th indicators. The
+  diagonal of the information matrix (i.e., mutual information of i-th
+  indicator to itself) are set to \code{NA} to remove perfect information.
+  Further, all mutual information values are normalized to obtain the
+  Normalized Mutual Information (NMI) value. The NMI can be calculated in two
+ways in the function using the average entropy (via \code{nmi_method =
+"average"}) and geometric mean of entropies (via \code{nmi_method =
+"geometric"}). Using the average entropies of \eqn{i} and \eqn{j}, the NMI is
+  calculated as:
+
+  \deqn{\text{NMI}(i; j) = \frac{2 \cdot I(i; j)}{H(i) + H(j)}}
+
+  whereas using the geometric means of \eqn{i} and \eqn{j}, the NMI is
+  calculated as:
+
+  \deqn{\text{NMI}(i; j) = \frac{I(i; j)}{\sqrt{H(i) \cdot H(j)}}}
+
+  where \eqn{I(i; j)} represents the mutual information between variables
+  \eqn{i} and \eqn{j}, and \eqn{H(i)} and \eqn{H(j)} represent the entropies
+  of variables \eqn{i} and \eqn{j}, respectively. Indicator weight
+  calculation is then mathematically represented as:
 
 \deqn{w[j] = \frac{1}{n} \sum_{i=1}^{n} mi\_matrix[i, j]}{w[j] = 1/n *
 sum(inf_matrix[i, j] for i=1 to n)}
 
-where \eqn{n} is the number of rows in \eqn{mi\_matrix}, and the sum is
-taken over all \eqn{i} such that \eqn{mi\_matrix[i, j]} is not \code{NA}.
-The information weights are then normalized by dividing each weight by the
-mean of the weights:
+  where \eqn{n} is the number of rows in \eqn{mi\_matrix}, and the sum is
+  taken over all \eqn{i} such that \eqn{mi\_matrix[i, j]} is not \code{NA}.
+  The information weights are then normalized by dividing each weight by the
+  mean of the weights:
 
 \deqn{w[j] = \frac{w[j]}{\frac{1}{m} \sum_{k=1}^{m} w[k]}}{w[j] = w[j] / (1/m
 * sum(w[k] for k=1 to m))}
