@@ -1,0 +1,356 @@
+#' Calculate Correlation-Weighted Composite Scores
+#'
+#' @description Create composite scores of scales by specifying the indicators
+#'   that go into each respective composite variable.
+#'
+#' @details
+#'
+#' Composite scores are calculated as either \strong{correlation-weighted} or
+#' \strong{regression-weighted} means of the indicators.
+#'
+#' \emph{Correlation-weighted scores.} For a given composite, a correlation
+#' matrix is computed using all its indicators. \eqn{w_j} denotes the weight
+#' for indicator \eqn{j}, computed as the average correlation with all other
+#' indicators:
+#'
+#' \deqn{w_j = \frac{1}{n} \sum_{i=1}^{n} r_{ij}, \quad i \neq j}
+#'
+#' where \eqn{r_{ij}} is the Pearson correlation between indicators \eqn{i} and
+#' \eqn{j}, and \eqn{n} is the number of indicators. Self-correlations
+#' (\eqn{r_{jj}}) are excluded. The weights are then normalized:
+#'
+#' \deqn{w_j^{*} = \frac{w_j}{\frac{1}{m} \sum_{k=1}^{m} w_k}}
+#'
+#' where \eqn{m} is the number of indicators in the composite. The
+#' correlation-weighted composite score \eqn{\bar{C}_c} for case \eqn{c} is
+#' then:
+#'
+#' \deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j^{*}}
+#'
+#' where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}.
+#'
+#' \emph{Regression-weighted scores.} A linear model is fit with the
+#' correlation-weighted composite scores as the outcome and the indicators as
+#' predictors:
+#'
+#' \deqn{\bar{C}_c = \beta_0 + \sum_{j=1}^{m} \beta_j I_{cj} + \varepsilon_c}
+#'
+#' The regression weights are the standardized coefficients \eqn{\beta_j},
+#' normalized as:
+#'
+#' \deqn{w_j = \frac{\beta_j}{\frac{1}{m} \sum_{k=1}^{m} \beta_k}}
+#'
+#' The regression-weighted composite score is then:
+#'
+#' \deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j}
+#'
+#' @param data A dataframe object. This should be a structured dataset where
+#'   each column represents a variable and each row represents an observation.
+#' @param composite_list A required \code{composite_list} object. Each name in
+#'   the list represents a composite variable, and the corresponding vector
+#'   contains the column names that are associated with the indicators
+#'   comprising said composite variable.
+#' @param weight Required weighting schema. Schemas include
+#'   \code{c("correlation", "regression")}. Default is \code{"correlation"}.
+#' @param digits The decimal places for the metrics to be rounded to. Default is
+#'   3. This argument is only relevant if \code{return_metrics = TRUE}.
+#' @param return_metrics Logic to determine whether to return reliability and
+#'   validity metrics. Set to \code{TRUE} for a list of dataframes with
+#'   reliability and validity metrics.
+#' @param file An optional file path. If specified, the results will be written
+#'   as a formatted excel workbook. This argument is only relevant if
+#'   \code{return_metrics = TRUE}.
+#' @param name A required string denoting the name of the composite variable.
+#'
+#' @returns If \code{return_metrics = FALSE}, a dataframe identical to the input
+#'   dataframe, with additional columns appended at the end, is returned. These
+#'   new columns represent the calculated composite scores. If
+#'   \code{return_metrics = TRUE}, a list containing the following dataframes is
+#'   returned:
+#'  \itemize{
+#'  \item \strong{Data}: A dataframe with the composite variables appended as new
+#'  variables.
+#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
+#'  \item \strong{Validity}: A matrix of composite reliability and validity
+#'  metrics.
+#' }
+#'
+#' @examples
+#'
+#' data(grit)
+#'
+#' # Specify the named list with composite names and their respective indicators
+#' composite_list <- composite_list(
+#'
+#'   # Lower-order composites
+#'   extraversion          = sprintf("e%01d", seq(10)),
+#'   neuroticism           = sprintf("n%01d", seq(10)),
+#'   agreeableness         = sprintf("a%01d", seq(10)),
+#'   conscientiousness     = sprintf("c%01d", seq(10)),
+#'   openness              = sprintf("o%01d", seq(10)),
+#'   consistency_interest  = sprintf("gs%01d", c(2,3,5,7,8,11)),
+#'   perseverance_effort   = sprintf("gs%01d", c(1,4,6,9,10,12)),
+#'
+#'   # Higher-order composites
+#'   grit                  = c("consistency_interest", "perseverance_effort")
+#'
+#'  )
+#'
+#' # Calculate correlation-weighted composite scores
+#' correlation_score(data = grit,
+#'                   composite_list = composite_list)
+#'
+#' # Calculate correlation-weighted composite scores, reliability, & validity
+#' correlation_score(data = grit,
+#'                   composite_list = composite_list,
+#'                   digits = 3,
+#'                   return_metrics = TRUE,
+#'                   file = "composite.xlsx")
+#'
+#' unlink("composite.xlsx")
+#'
+#' @export
+correlation_score <- function(
+    data = .,
+    composite_list,
+    weight = c("correlation", "regression"),
+    digits = 3,
+    return_metrics = FALSE,
+    file = NULL,
+    name = NULL
+){
+  
+  # -- MATCH ARGUMENTS -- #
+  
+  weight <- match.arg(weight)
+  
+  
+  # -- DATA PREPARATION -- #
+  
+  # Get only lower order variables
+  lower_order_varlist  <- composite_list[["lower"]]
+  
+  # Get only higher order variables
+  higher_order_varlist <- composite_list[["higher"]]
+  
+  
+  
+  # -- IF ONLY CALCULATING COMPOSITE -- #
+  if(return_metrics == FALSE){
+    
+    # -- RUN CORRELATION WEIGHTED COMPOSITE SCORING FOR LOWER ORDER -- #
+    
+    # Apply the function to each variable of lower order composite list
+    data[names(lower_order_varlist)] <- lapply(
+      lower_order_varlist,
+      function(var) {
+        
+        if (length(var) == 1) {
+          
+          calc_single_indicator(
+            data = data,
+            var = var,
+            name = NULL,
+            digits = digits,
+            return_metrics = return_metrics
+          )
+          
+        } else {
+          
+          calc_cov_composite(
+            data = data,
+            var = var,
+            weight = weight,
+            name = NULL,
+            digits = digits,
+            return_metrics = return_metrics
+          )
+          
+        }
+        
+      }
+    )
+    
+    # Update the data object
+    data <- as.data.frame(data)
+    
+    
+    
+    # -- IF HIGHER ORDER VARIABLES EXIST -- #
+    
+    if(length(higher_order_varlist) > 0){
+      
+      # Apply the function to each variable of higher order composite list
+      data[names(higher_order_varlist)] <- lapply(
+        higher_order_varlist,
+        function(var) {
+          
+          calc_cov_composite(
+            data = data,
+            var = var,
+            weight = weight,
+            name = NULL,
+            digits = digits,
+            return_metrics = return_metrics
+          )
+          
+        }
+      )
+      
+    }
+    
+    
+    # Return
+    return(data)
+    
+  }
+  
+  
+  
+  # -- IF CALCULATING COMPOSITE SCORE & METRICS -- #
+  if(return_metrics == return_metrics){
+    
+    # -- RUN CORRELATION WEIGHTED COMPOSITE SCORING FOR LOWER ORDER -- #
+    
+    # Apply the function to each element of the lower order varlist
+    lower_results <- lapply(
+      names(lower_order_varlist),
+      function(name) {
+        
+        var <- lower_order_varlist[[name]]
+        
+        if (length(var) == 1) {
+          
+          calc_single_indicator(
+            data = data,
+            var = var,
+            name = name,
+            digits = digits,
+            return_metrics = return_metrics
+          )
+          
+        } else {
+          
+          calc_cov_composite(
+          data = data,
+          var = var,
+          weight = weight,
+          name = name,
+          digits = digits,
+          return_metrics = return_metrics
+        )
+          
+        }
+        
+      }
+    )
+    
+    
+    # Extract the results
+    data[names(lower_order_varlist)] <- purrr::map(
+      lower_results, 
+      "composite_score"
+    )
+    
+    metrics <- purrr::list_rbind(
+      purrr::map(
+        lower_results, "composite_metrics"
+      )
+    )
+    
+    validity <- purrr::list_rbind(
+      purrr::map(
+        lower_results, "composite_validity"
+      )
+    )
+    
+    # Update the data object
+    data <- as.data.frame(data)
+    
+    
+    
+    # -- IF HIGHER ORDER VARIABLES EXIST -- #
+    
+    if(length(higher_order_varlist) > 0){
+      
+      # Apply the function to each element of the higher order varlist
+      higher_results <- lapply(
+        names(higher_order_varlist),
+        function(name) {
+          
+          var <- higher_order_varlist[[name]]
+          
+          calc_cov_composite(
+            data = data,
+            var = var,
+            weight = weight,
+            name = name,
+            digits = digits,
+            return_metrics = return_metrics
+          )
+          
+        }
+      )
+      
+      # Extract the results
+      data[names(higher_order_varlist)] <- purrr::map(
+        higher_results, 
+        "composite_score"
+      )
+      
+      metrics <- rbind(
+        metrics,
+        purrr::list_rbind(
+          purrr::map(
+            higher_results, "composite_metrics"
+          )
+        )
+      )
+      
+      validity <- rbind(
+        validity,
+        purrr::list_rbind(
+          purrr::map(
+            higher_results, "composite_validity"
+          )
+        )
+      )
+      
+      # Update the data object
+      data <- as.data.frame(data)
+      
+    }
+    
+    
+    # Combine into returnable list
+    
+    composite_sheets <- list(
+      data = data,
+      metrics = metrics,
+      validity = validity
+    )
+    
+    
+    
+    # -- IF FILE PATH IS SPECIFIED FOR EXPORTING RESULTS -- #
+    
+    if(!is.null(file)){
+      
+      export_metrics(
+        metrics = composite_sheets,
+        digits = digits,
+        name = name,
+        file = file
+      )
+      
+    }
+    
+    
+    # -- RETURN -- #
+    return(composite_sheets)
+    
+  }
+  
+
+  
+}

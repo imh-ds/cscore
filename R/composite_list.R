@@ -1,20 +1,23 @@
 #' Composite List
 #'
-#' @description A duplicate of base R's \code{list} function. Create a list of
-#'   composite variable named vectors by specifying their corresponding
-#'   indicator items. Composite variables with indicators comprising the names
-#'   of other composite variables are automatically categorized as higher-order
-#'   composites. These are separated into its own \code{higher} list of
-#'   composite vectors. The remaining composite variables are allocated into the
-#'   \code{lower} list of composite vectors.
+#' @description Constructs a structured list of named composite variables and 
+#' their corresponding indicator items. Composite variables that reference other 
+#' composites in their definitions are automatically classified as higher-order 
+#' composites and separated accordingly. The function returns a list containing 
+#' lower-order composites, higher-order composites, and the declaration order.
 #'
-#' @param ... Required named objects. Each vector should include the columns
-#'   representing the indicator variables.
+#' @param ... Named vectors specifying the indicators for each composite 
+#' variable. Higher-order composites should be defined using the names of 
+#' previously defined composites.
 #'
-#' @return Two lists of lower and higher-order named composite vectors.
+#' @return A named list with three elements:
+#' \itemize{
+#'   \item{\code{lower}}{ — a list of lower-order composite variables}
+#'   \item{\code{higher}}{ — a list of higher-order composite variables}
+#'   \item{\code{order}}{ — a character vector specifying the order of declaration}
+#' }
 #'
 #' @examples
-#'
 #' data(grit)
 #'
 #' # Specify the named list with composite names and their respective indicators
@@ -50,6 +53,14 @@ composite_list <- function(...){
   # Get only higher order variables
   higher_order_varlist <- keep_higher_order_variable(composites,
                                                      higher_order_variables)
+  
+  # Check the length of higher order vectors
+  higher_order_length_check <- any(sapply(higher_order_varlist, length) == 1)
+  
+  # Flag and provide error if length == 1
+  if(isTRUE(higher_order_length_check)) {
+    stop("Error: Higher order variables cannot be composed of a single indicator.")
+  }
   
   # Composite variable order
   composite_order <- names(composites)

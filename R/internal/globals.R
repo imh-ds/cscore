@@ -1,0 +1,20 @@
+utils::globalVariables(
+  c(
+    ".",
+    "composite",
+    "indicator",
+    "loadings",
+    "weights",
+    "composite",
+    "alpha",
+    "rhoc",
+    "ave",
+    "loading_range",
+    "weight_range",
+    "median",
+    "Composite",
+    "from",
+    "to",
+    "variable"
+  )
+)

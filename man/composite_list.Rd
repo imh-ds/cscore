@@ -13,23 +13,26 @@ clist(...)
 cl(...)
 }
 \arguments{
-\item{...}{Required named objects. Each vector should include the columns
-representing the indicator variables.}
+\item{...}{Named vectors specifying the indicators for each composite 
+variable. Higher-order composites should be defined using the names of 
+previously defined composites.}
 }
 \value{
-Two lists of lower and higher-order named composite vectors.
+A named list with three elements:
+\itemize{
+  \item{\code{lower}}{ — a list of lower-order composite variables}
+  \item{\code{higher}}{ — a list of higher-order composite variables}
+  \item{\code{order}}{ — a character vector specifying the order of declaration}
+}
 }
 \description{
-A duplicate of base R's \code{list} function. Create a list of
-  composite variable named vectors by specifying their corresponding
-  indicator items. Composite variables with indicators comprising the names
-  of other composite variables are automatically categorized as higher-order
-  composites. These are separated into its own \code{higher} list of
-  composite vectors. The remaining composite variables are allocated into the
-  \code{lower} list of composite vectors.
+Constructs a structured list of named composite variables and 
+their corresponding indicator items. Composite variables that reference other 
+composites in their definitions are automatically classified as higher-order 
+composites and separated accordingly. The function returns a list containing 
+lower-order composites, higher-order composites, and the declaration order.
 }
 \examples{
-
 data(grit)
 
 # Specify the named list with composite names and their respective indicators

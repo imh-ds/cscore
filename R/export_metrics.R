@@ -5,6 +5,62 @@
 #'   with what is typically reported in APA 7th edition, and can be copy and
 #'   pasted directly into a Word document or similar document software.
 #'
+#' @details Indicator loadings (\eqn{\lambda_i}) are computed as the bivariate
+#' correlation between each indicator \eqn{I_i} and the correlation-weighted
+#' composite score \eqn{\bar{C}_c}:
+#'
+#' \deqn{\lambda_i = \mathrm{cor}(I_i, \bar{C}_c)}
+#'
+#' Two reliability metrics are reported: Cronbach's alpha (\eqn{\alpha}) and
+#' composite reliability (\eqn{\rho_c}, also referred to as McDonald's omega,
+#' \eqn{\omega}).
+#'
+#' Cronbach's alpha is defined as:
+#'
+#' \deqn{\alpha = \frac{k \bar{c}}{\bar{v} + (k - 1)\bar{c}}}
+#'
+#' where \eqn{k} is the number of indicators, \eqn{\bar{c}} is the average
+#' inter-item covariance, and \eqn{\bar{v}} is the average indicator variance.
+#' Alpha assumes tau-equivalence (equal loadings across indicators) and is
+#' sensitive to the number of indicators. While widely used, it is not
+#' recommended due to these limitations; it is reported here for completeness
+#' only.
+#'
+#' Composite reliability (\eqn{\rho_c}) is a weighted reliability estimate based
+#' on user-defined indicator weights. It uses the same formula as McDonald's
+#' omega but allows loadings to be weighted according to the composite score
+#' structure:
+#'
+#' \deqn{\rho_c = \frac{\left(\sum \lambda_i w_i\right)^2}{\left(\sum \lambda_i
+#' w_i\right)^2 + \sum e_{w_i}}}
+#'
+#' where \eqn{w_i} is the weight for indicator \eqn{i}, and \eqn{e_{w_i}} is the
+#' weighted measurement error:
+#'
+#' \deqn{e_{w_i} = (1 - \lambda_i^2) \cdot w_i}
+#'
+#' Although this metric is labeled \eqn{\rho_c} to align with PLS-SEM
+#' nomenclature, it is mathematically equivalent to omega and may be reported as
+#' either.
+#'
+#' Average Variance Extracted (AVE) measures the proportion of variance captured
+#' by the construct relative to measurement error. It is defined as:
+#'
+#' \deqn{\mathrm{AVE} = \frac{\sum \lambda_{w_i}^2}{\sum \lambda_{w_i}^2 + \sum
+#' e_{w_i}}}
+#'
+#' where the weighted squared loading is:
+#'
+#' \deqn{\lambda_{w_i}^2 = \lambda_i^2 \cdot w_i}
+#'
+#' AVE is commonly used in the Fornell-Larcker criterion for discriminant
+#' validity:
+#'
+#' \deqn{\sqrt{\mathrm{AVE}_i} > \max_{j} (r_{ij})}
+#'
+#' That is, the square root of AVE for a construct should exceed its highest
+#' correlation with any other construct.
+#'
 #' @param metrics A required list object. The list should contain an array for
 #'   composite scores under \code{data}, a data frame of indicator loadings and
 #'   weights under \code{metrics}, and composite validity value under

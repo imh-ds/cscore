@@ -1,4 +1,4 @@
-#' Keep Higher Order Constructs from Composite List
+#' Keep Higher Order Constructs from Composite List (Internal)
 #'
 #' @description Takes a composite list as input and only keeps the vectors that
 #'   match higher order constructs/variables.
@@ -16,6 +16,7 @@
 #'
 #' @seealso [detect_higher_order_variable(), remove_higher_order_variable()]
 #'
+#' @keywords internal
 #' @noRd
 keep_higher_order_variable <- function(
     composite_list,

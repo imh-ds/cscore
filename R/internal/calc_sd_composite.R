@@ -1,16 +1,7 @@
 #' Calculate Standard Deviation Composite Scores
 #'
-#' @description Calculate the composite score for the mutual information family
+#' @description Calculate the composite score for the standard deviation family
 #'   of weighting schemas.
-#'
-#' @details For information on the specifics calculations, refer to the help
-#'   documentations of \code{?average_score} (for unweighted),
-#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
-#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
-#'   and \code{?information_score} (for mutual-information-weighted).
-#'
-#'   Refer to help documentation \code{?calc_metrics} for information on how
-#'   reliability and validity metrics are calculated.
 #'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
@@ -35,6 +26,7 @@
 #'  validity metrics.}
 #' }
 #'
+#' @keywords internal
 #' @noRd
 calc_sd_composite <- function(
     data,
@@ -75,11 +67,7 @@ calc_sd_composite <- function(
   weights <- sd_weights / mean(sd_weights)
   
   # Calculate SD composite score
-  composite_score <- rowMeans(sweep(df,
-                                    2,
-                                    weights,
-                                    "*"),
-                              na.rm = T)
+  composite_score <- weighted_row_mean(df, weights)
   
   
   

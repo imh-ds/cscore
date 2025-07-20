@@ -1,16 +1,7 @@
 #' Calculate Covariance Composite Scores
 #'
-#' @description Calculate the composite score for the mutual information family
-#'   of weighting schemas.
-#'
-#' @details For information on the specifics calculations, refer to the help
-#'   documentations of \code{?average_score} (for unweighted),
-#'   \code{?median_score} (for median-weighted), \code{?correlation_score} (for
-#'   correlation-weighted), \code{?regression_score} (for regression-weighted),
-#'   and \code{?information_score} (for mutual-information-weighted).
-#'
-#'   Refer to help documentation \code{?calc_metrics} for information on how
-#'   reliability and validity metrics are calculated.
+#' @description Calculate the composite score for the covariance family of
+#'   weighting schemas.
 #'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
@@ -24,7 +15,7 @@
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
 #'
-#' @return If \code{return_metrics = FALSE}, an array of the composite score is
+#' @returns If \code{return_metrics = FALSE}, an array of the composite score is
 #'   returned. If \code{return_metrics = TRUE}, a list is returned consisting
 #'   of:
 #' \itemize{
@@ -35,6 +26,7 @@
 #'  validity metrics.}
 #' }
 #'
+#' @keywords internal
 #' @noRd
 calc_cov_composite <- function(
     data,
@@ -100,10 +92,16 @@ calc_cov_composite <- function(
     if(weight == "regression"){
       
       # Write linear model formula
-      lm_formula <- stats::as.formula(paste0(name,
-                                             "~",
-                                             paste(var,
-                                                   collapse = " + ")))
+      lm_formula <- stats::as.formula(
+        paste0(
+          name,
+          "~",
+          paste
+          (var,
+            collapse = " + "
+          )
+        )
+      )
       
       # Calculate correlation weighted composite score and save to dataframe
       df[[name]] <- rowMeans(sweep(df,
@@ -118,8 +116,9 @@ calc_cov_composite <- function(
       
       # Get regression weights
       # NOTE: Getting standardized beta coefficients to avoid issues with different scales
-      reg_weights <- stats::coef(lm.beta::lm.beta(lm_model))[setdiff(names(stats::coef(lm_model)),
-                                                                     "(Intercept)")]
+      reg_weights <- stats::coef(
+        lm.beta::lm.beta(lm_model))[setdiff(names(stats::coef(lm_model)),
+                                            "(Intercept)")]
       
       # Normalize regression weights
       weights <- reg_weights / mean(reg_weights)
@@ -133,11 +132,7 @@ calc_cov_composite <- function(
   
   
   # Calculate unweighted composite score
-  composite_score <- rowMeans(sweep(df,
-                                    2,
-                                    weights,
-                                    "*"),
-                              na.rm = T)
+  composite_score <- weighted_row_mean(df, weights)
   
 
   

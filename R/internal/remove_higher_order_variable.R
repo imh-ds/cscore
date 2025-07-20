@@ -1,4 +1,4 @@
-#' Remove Higher Order Constructs from Composite List
+#' Remove Higher Order Constructs from Composite List (Internal)
 #'
 #' @description Takes a composite list as input and removes vectors that match
 #'   higher order constructs/variables.
@@ -16,6 +16,7 @@
 #'
 #' @seealso [detect_higher_order_variable(), keep_higher_order_variable()]
 #'
+#' @keywords internal
 #' @noRd
 remove_higher_order_variable <- function(
     composite_list,

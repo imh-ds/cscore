@@ -9,43 +9,85 @@
 composite_score(
   data = .,
   composite_list,
-  weight = "correlation",
-  digits = 3,
+  composite_model = NULL,
+  weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",
+    "median", "median_decay", "median_gauss", "mutual_info", "irt", "glm", "pca"),
   decay_rate = 0.5,
   sigma = 0.5,
-  entropy = "emp",
-  nmi_method = "geometric",
+  entropy = c("emp", "mm", "shrink", "sg"),
+  nmi_method = c("geometric", "average"),
+  threshold = 10,
+  pred_type = c("glm", "rf"),
+  item_type = NULL,
+  pmm_k = 5,
+  maxiter = 10,
+  verbose = 0,
+  alpha = 0.5,
+  nfolds = 10,
+  ntrees = 100,
+  importance = c("permutation", "impurity"),
+  family = c("gaussian", "binomial", "multinomial", "poisson"),
   return_metrics = FALSE,
+  digits = 3,
   file = NULL,
-  name = NULL
+  name = NULL,
+  seed = NULL
 )
 
 cscore(
   data = .,
   composite_list,
-  weight = "correlation",
-  digits = 3,
+  composite_model = NULL,
+  weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",
+    "median", "median_decay", "median_gauss", "mutual_info", "irt", "glm", "pca"),
   decay_rate = 0.5,
   sigma = 0.5,
-  entropy = "emp",
-  nmi_method = "geometric",
+  entropy = c("emp", "mm", "shrink", "sg"),
+  nmi_method = c("geometric", "average"),
+  threshold = 10,
+  pred_type = c("glm", "rf"),
+  item_type = NULL,
+  pmm_k = 5,
+  maxiter = 10,
+  verbose = 0,
+  alpha = 0.5,
+  nfolds = 10,
+  ntrees = 100,
+  importance = c("permutation", "impurity"),
+  family = c("gaussian", "binomial", "multinomial", "poisson"),
   return_metrics = FALSE,
+  digits = 3,
   file = NULL,
-  name = NULL
+  name = NULL,
+  seed = NULL
 )
 
 cs(
   data = .,
   composite_list,
-  weight = "correlation",
-  digits = 3,
+  composite_model = NULL,
+  weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",
+    "median", "median_decay", "median_gauss", "mutual_info", "irt", "glm", "pca"),
   decay_rate = 0.5,
   sigma = 0.5,
-  entropy = "emp",
-  nmi_method = "geometric",
+  entropy = c("emp", "mm", "shrink", "sg"),
+  nmi_method = c("geometric", "average"),
+  threshold = 10,
+  pred_type = c("glm", "rf"),
+  item_type = NULL,
+  pmm_k = 5,
+  maxiter = 10,
+  verbose = 0,
+  alpha = 0.5,
+  nfolds = 10,
+  ntrees = 100,
+  importance = c("permutation", "impurity"),
+  family = c("gaussian", "binomial", "multinomial", "poisson"),
   return_metrics = FALSE,
+  digits = 3,
   file = NULL,
-  name = NULL
+  name = NULL,
+  seed = NULL
 )
 }
 \arguments{
@@ -57,58 +99,141 @@ the list represents a composite variable, and the corresponding vector
 contains the column names that are associated with the indicators
 comprising said composite variable.}
 
-\item{weight}{The weighting schema to use in calculating composite scores.
-For a weighting schema within the Covariance Family, set \code{weight} to
-\code{"average"} for unweighted, \code{"correlation"} for
-correlation-weighted, and \code{"regression"} for regression-weighted. For
-a weighting schema within the Standard Deviation (SD) Family, set
-\code{weight} to \code{"sd_upweight"} to upweight SDs and
-\code{"sd_downweight"} to downweight SDs. For a weighting schema within the
-Median Family, set \code{weight} to \code{"median"} to calculate the
-composite score as the median score, \code{"median_decay"} for
-distance-to-median weighting with the decay function, and
-\code{"median_gauss"} for distance-to-median weighting with the gaussian
-function.}
+\item{composite_model}{An optional \code{composite_model} object. Combines
+one or more sets of `link` paths specifying directed associations between
+variables. The model is assumed to be a directed acyclic graph.}
 
-\item{digits}{The decimal places for the metrics to be rounded to. Default is
-3. This argument is only relevant if \code{return_metrics = TRUE}.}
+\item{weight}{The weighting schema used to calculate composite scores. Choose
+  from the following families:
 
-\item{decay_rate}{A numeric value reflecting the decay rate (i.e.,
-sensitivity) of the distance-to-median weighting schema. The default value
-is set to 0.5. This argument is only relevant if \code{weight =
-"median_decay"}.}
+  \strong{Covariance Family:}
+\itemize{
+  \item \code{"average"}: Unweighted average (straight mean).
+  \item \code{"correlation"}: Correlation-weighted composite scores.
+  \item \code{"regression"}: Regression-weighted composite scores.
+}
+  \strong{Standard Deviation (SD) Family:}
+\itemize{
+  \item \code{"sd_upweight"}: Upweights indicators with higher standard deviation.
+  \item \code{"sd_downweight"}: Downweights indicators with higher standard deviation.
+}
+  \strong{Median Family:}
+\itemize{
+  \item \code{"median"}: Uses the median of the indicators as the composite score.
+  \item \code{"median_decay"}: Applies a decay-weighted distance from the median.
+  \item \code{"median_gauss"}: Applies a Gaussian-weighted distance from the median.
+}
+  \strong{Information Family:}
+\itemize{
+  \item \code{"mutual_info"}: Shared mutual information-weighted composite scores.
+}
+  \strong{Discriminant Family:}
+\itemize{
+  \item \code{"irt"}: Item response theory discriminant parameter-weighted composite scores.
+  \item \code{c("pca", "glm")}: Principal component analysis and generalized linear model weighted composite scores.
+}}
 
-\item{sigma}{A numeric value reflecting the sigma value for the Gaussian
-function in the distance-to-median weighting schema. The default value is
-set to 0.5. This argument is only relevant if \code{weight =
-"median_gauss"}.}
+\item{decay_rate}{Numeric. Reflects the decay rate (i.e., sensitivity) of the
+distance-to-median weighting schema. The default value is set to 0.5.}
 
-\item{entropy}{A string value reflecting the mutual information entropy
-estimator from the \code{infotheo} package. Four estimators are available:
-\code{emp} to compute the entropy of the empirical probability
-distribution. Empirical entropy is suitable for simple calculations without
-corrections. \code{mm} applies an asymptotic bias-corrected estimator
-making it suitable for small sample sizes. \code{shrink} applies a
-shrinkage estimate of the Dirichlet probability distribution to provide a
-stable estimate useful for small sample sizes or sparse data. \code{sg}
-applies a Schurmann-Grassberger estimate of the Dirichlet probability
-distribution to serve as an alternative to the Shrinkage approach.}
+\item{sigma}{Numeric. Reflects the sigma value for the Gaussian function in
+the distance-to-median weighting schema. The default value is set to 0.5.}
 
-\item{nmi_method}{A string value reflecting the method used for calculating
-Normalized Mutual Information (NMI) values. \code{"average"} will normalize
-MI values using the average entropies of variables A and B.
-\code{"geometric"} will normalize MI values using the geometric mean of
-entropies of variables A and B.}
+\item{entropy}{String. Reflects the mutual information entropy estimator from
+the \code{infotheo} package. Four estimators are available: \code{emp} to
+compute the entropy of the empirical probability distribution. Empirical
+entropy is suitable for simple calculations without corrections. \code{mm}
+applies an asymptotic bias-corrected estimator making it suitable for small
+sample sizes. \code{shrink} applies a shrinkage estimate of the Dirichlet
+probability distribution to provide a stable estimate useful for small
+sample sizes or sparse data. \code{sg} applies a Schurmann-Grassberger
+estimate of the Dirichlet probability distribution to serve as an
+alternative to the Shrinkage approach.}
 
-\item{return_metrics}{Logic to determine whether to return reliability and
+\item{nmi_method}{String. Reflects the method used for calculating Normalized
+Mutual Information (NMI) values. \code{"average"} will normalize MI values
+using the average entropies of variables A and B. \code{"geometric"} will
+normalize MI values using the geometric mean of entropies of variables A
+and B.}
+
+\item{threshold}{Integer. Specifies the maximum number of unique values to
+consider the input as discrete. Defaults to 10.}
+
+\item{pred_type}{Prediction method schema for predictive weighting. Schemas
+include \code{c("glm", "rf")}. \code{"glm"} runs \code{glmnet::cv.glmnet()}
+for regularization linear regression. \code{"rf"} runs
+\code{ranger::ranger()} for Random Forest modeling. Default is
+\code{"glm"}.}
+
+\item{item_type}{String. Specifies the item response model(s) to be used,
+passed to the \code{itemtype} argument in \code{mirt::mirt()}. See
+\code{?mirt::mirt} for the full list of supported item types and their
+definitions. Defaults to \code{NULL}.}
+
+\item{pmm_k}{Integer. Number of donor candidates used for predictive mean
+matching (PMM) during imputation. If set to \code{0}, PMM is disabled and
+raw predictions are used.}
+
+\item{maxiter}{Integer. Maximum number of iterations for chained equations in
+\code{missRanger::missRanger()}. Iteration continues until convergence or
+the specified limit is reached.}
+
+\item{verbose}{Logical. If \code{1}, print progress messages and intermediate
+output. Defaults to \code{0}.}
+
+\item{alpha}{Numeric. Elastic net mixing parameter, with \code{0 <= alpha <=
+1}. Controls the relative weighting of L1 (lasso) and L2 (ridge) penalties
+in the model. The penalty term is defined as \code{(1 - alpha)/2 * sum(beta^2)
++ alpha * sum(abs(beta))}, where \code{beta} is the vector of coefficients.
+When \code{alpha = 1}, the penalty is pure lasso; when \code{alpha = 0}, it
+is ridge regression.}
+
+\item{nfolds}{Integer. The number of folds used for random forest k-fold
+cross-validation. Controls how the data are partitioned during resampling.
+Must be at least 2. Default is 10.}
+
+\item{ntrees}{Integer. Number of trees to grow in the random forest model.
+Default in \code{ranger} is 500.}
+
+\item{importance}{Character string. Specifies the type of variable importance
+measure to compute. Must be one of \code{"permutation"} or
+\code{"impurity"}.
+\itemize{
+  \item \code{"permutation"}: Computes mean decrease in predictive accuracy by permuting each variable and measuring the resulting drop in model performance (typically using out-of-bag data). This method is more computationally expensive but generally provides more reliable and differentiated estimates of variable importance. It is robust to scale and less biased in the presence of correlated or irrelevant predictors.
+  \item \code{"impurity"}: Computes mean decrease in node impurity (e.g., Gini for classification, variance for regression) aggregated over all trees. This method is fast and computed during model training, but can be biased toward variables with many categories or continuous values, and tends to distribute importance more evenly across predictors—even when some are irrelevant or redundant.
+}
+Recommend using \code{"impurity"} for speed and \code{"permutation"} for
+interpretability, reliability, or feature selection. Default is
+\code{"permutation"}.}
+
+\item{family}{Character string. Specifies the model family. Must be one of
+\code{"gaussian"}, \code{"binomial"}, \code{"multinomial"}, or
+\code{"poisson"}. This argument determines the loss function used in
+penalized model fitting via \code{cv.glmnet}. The supported options are:
+\itemize{
+  \item \code{"gaussian"}: for linear regression with continuous outcomes.
+  \item \code{"binomial"}: for binary classification using logistic regression. The response should be a factor with two levels or a numeric vector containing 0 and 1.
+  \item \code{"multinomial"}: for multi-class classification with three or more unordered outcome categories. The response should be a factor.
+  \item \code{"poisson"}: for modeling count data under a Poisson distribution with a log link. The response should be a non-negative count-valued numeric vector.
+}
+Default is \code{"gaussian"}.}
+
+\item{return_metrics}{Logic. Determines whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with
 reliability and validity metrics.}
+
+\item{digits}{Integer. The decimal places for the metrics to be rounded to.
+Default is 3. This argument is only relevant if \code{return_metrics =
+TRUE}.}
 
 \item{file}{An optional file path. If specified, the results will be written
 as a formatted excel workbook. This argument is only relevant if
 \code{return_metrics = TRUE}.}
 
-\item{name}{A required string denoting the name of the composite variable.}
+\item{name}{An optional string denoting the name of the study/analysis.}
+
+\item{seed}{Integer. Seed for reproducibility. Defaults to \code{NULL}, where
+no seed is set.}
 }
 \value{
 If \code{return_metrics = FALSE}, a dataframe identical to the input
@@ -127,12 +252,12 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
 \description{
 Create composite scores of scales by specifying the indicators
   that go into each respective composite variable. See help documents
-  `?average_score`, `?regression_score`, and `?correlation_score` for
+  \code{average_score}, \code{correlation_score}, \code{discriminant_score},
+  \code{information_score}, \code{median_score}, or \code{sd_score} for
   information on how the composite scores for each weighting scheme are
   calculated.
 }
 \examples{
-
 data(grit)
 
 # Specify the named list with composite names and their respective indicators
@@ -152,62 +277,10 @@ composite_list <- composite_list(
 
  )
 
-# FOR COVARIANCE FAMILY
-
 # Calculate unweighted composite scores
 composite_score(data = grit,
                 composite_list = composite_list,
                 weight = "average")
-
-# Calculate correlation-weighted composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "correlation")
-
-# Calculate regression-weighted composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "regression")
-
-
-# FOR STANDARD DEVIATION FAMILY
-
-# Calculate SD-upweighted composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "sd_upweight")
-
-# Calculate SD-downweighted composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "sd_downweight")
-
-
-# FOR MEDIAN FAMILY
-
-# Calculate median composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "median")
-
-# Calculate distance-to-median decay function composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "median_decay")
-
-# Calculate distance-to-median gaussian function composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "median_gauss")
-
-
-
-# FOR INFORMATION FAMILY
-
-# Calculate median composite scores
-composite_score(data = grit,
-                composite_list = composite_list,
-                weight = "mutual_info")
 
 
 }

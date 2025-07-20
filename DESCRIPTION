@@ -1,7 +1,7 @@
 Package: cscore
 Type: Package
 Title: Weighted Composite Scoring for Scales
-Version: 0.2.3
+Version: 1.0.0
 Author: Hohjin Im
 Maintainer: Hohjin Im <hohjini@uci.edu>
 Description: Weighted composite scoring for scales used in psychological and 
@@ -12,12 +12,19 @@ Depends:
     R (>= 4.3.0)
 Imports:
     dplyr,
+    tidyr,
+    purrr,
+    tibble,
     magrittr,
     stringr,
-    tibble,
+    psych,
     lm.beta,
     openxlsx,
     ltm,
-    infotheo
+    infotheo,
+    ranger,
+    missRanger,
+    mirt,
+    glmnet
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
