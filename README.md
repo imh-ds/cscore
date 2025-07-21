@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # cscore
 
 A lightweight R package for constructing composite scores with
