@@ -1,5 +1,5 @@
 ---
-title: cscore: Weighted Composite Scoring for Scales Used in Psychological and Social Behavioral Research
+title: "cscore: Weighted Composite Scoring for Scales Used in Psychological and Social Behavioral Research"
 
 tags:
   - R
