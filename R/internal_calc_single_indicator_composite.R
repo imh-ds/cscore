@@ -13,7 +13,6 @@
 #'   reliability and validity metrics.
 #'
 #' @keywords internal
-#' @noRd
 calc_single_indicator <- function(
     data,
     var,

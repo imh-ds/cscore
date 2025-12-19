@@ -14,7 +14,6 @@
 #'   `from` nodes are replaced by one row for each of their component nodes.
 #'
 #' @keywords internal
-#' @noRd
 expand_lower_paths <- function(
     paths, 
     composite_list) {

@@ -1,4 +1,4 @@
-# cscore
+# cscore: Weighted composite scoring for scales used in psychological and social behavioral research
 
 A lightweight R package for constructing composite scores with
 correlation or regression-based weighting. Designed for use in

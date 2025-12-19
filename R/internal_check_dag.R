@@ -11,7 +11,6 @@
 #'   `FALSE` otherwise.
 #'
 #' @keywords internal
-#' @noRd
 check_dag <- function(paths) {
   # Create adjacency list
   edges <- split(paths$to, paths$from)

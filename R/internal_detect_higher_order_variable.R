@@ -23,7 +23,6 @@
 #' @seealso [remove_higher_order_variable(), keep_higher_order_variable()]
 #'
 #' @keywords internal
-#' @noRd
 detect_higher_order_variable <- function(composite_list){
   
   # Initialize an empty character vector to store the names of higher order variables

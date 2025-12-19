@@ -20,9 +20,9 @@ previously defined composites.}
 \value{
 A named list with three elements:
 \itemize{
-  \item{\code{lower}}{ — a list of lower-order composite variables}
-  \item{\code{higher}}{ — a list of higher-order composite variables}
-  \item{\code{order}}{ — a character vector specifying the order of declaration}
+  \item \code{lower}: a list of lower-order composite variables
+  \item \code{higher}: a list of higher-order composite variables
+  \item \code{order}: a character vector specifying the order of declaration
 }
 }
 \description{

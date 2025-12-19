@@ -2,6 +2,6 @@
 ^\.Rproj\.user$
 notebook*
 example*
-joss-paper*
+manuscript*
 .github*
 .Rhistory

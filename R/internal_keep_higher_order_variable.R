@@ -17,7 +17,6 @@
 #' @seealso [detect_higher_order_variable(), remove_higher_order_variable()]
 #'
 #' @keywords internal
-#' @noRd
 keep_higher_order_variable <- function(
     composite_list,
     higher_order_variables

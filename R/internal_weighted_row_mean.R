@@ -11,7 +11,6 @@
 #' @return A numeric vector of weighted means, one for each row of \code{df}.
 #'
 #' @keywords internal
-#' @noRd
 weighted_row_mean <- function(
     df, 
     weights) {

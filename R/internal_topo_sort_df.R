@@ -9,7 +9,6 @@
 #' @return A character vector with the nodes in topologically sorted order.
 #'
 #' @keywords internal
-#' @noRd
 topo_sort_df <- function(df) {
   
   edges <- df

@@ -19,15 +19,15 @@
 #'   returned. If \code{return_metrics = TRUE}, a list is returned consisting
 #'   of:
 #' \itemize{
-#'  \item{\code{composite_score}: }{An array with the calculated composite
-#'  variable.} \item{\code{composite_metrics}: }{A matrix loadings and weights
-#'  of the indicators.}
-#'  \item{\code{composite_validity}: }{A matrix of composite reliability and
-#'  validity metrics.}
+#'  \item \code{composite_score}: An array with the calculated composite
+#'  variable.
+#'  \item \code{composite_metrics}: A matrix loadings and weights
+#'  of the indicators.
+#'  \item \code{composite_validity}: A matrix of composite reliability and
+#'  validity metrics.
 #' }
 #'
 #' @keywords internal
-#' @noRd
 calc_sd_composite <- function(
     data,
     var,

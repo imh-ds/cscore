@@ -22,7 +22,6 @@
 #' }
 #'
 #' @keywords internal
-#' @noRd
 calc_metrics <- function(
   df,
   composite_score,

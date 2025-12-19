@@ -13,7 +13,6 @@
 #'   and considered discrete.
 #'
 #' @keywords internal
-#' @noRd
 coerce_to_discrete_if_integer_like <- function(x, threshold = 10) {
   if (!is.numeric(x)) return(x)
   

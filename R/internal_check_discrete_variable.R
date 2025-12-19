@@ -15,7 +15,6 @@
 #'   variable.
 #'
 #' @keywords internal
-#' @noRd
 is_discrete_variable <- function(x, threshold = 10) {
   
   # If factor or integer, return TRUE for discrete variable
