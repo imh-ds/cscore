@@ -26,6 +26,12 @@ weighted_row_mean <- function(
   w_norm <- w_masked / rowSums(w_masked)
   
   # Compute weighted row means with NA-safe multiplication
-  rowSums(df * w_norm, na.rm = TRUE)
-  
+  out <- rowSums(df * w_norm, na.rm = TRUE)
+
+  # Where all df values are NA, replace with NA
+  out[!rowSums(mask)] <- NA_real_
+ 
+  # Return
+  out
+
 }

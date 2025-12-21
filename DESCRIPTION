@@ -1,7 +1,7 @@
 Package: cscore
 Type: Package
 Title: Weighted Composite Scoring for Scales
-Version: 1.0.0
+Version: 1.0.1
 Author: Hohjin Im
 Maintainer: Hohjin Im <hohjini@uci.edu>
 Description: Weighted composite scoring for scales used in psychological and 
