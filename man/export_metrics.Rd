@@ -62,7 +62,7 @@ w_i\right)^2 + \sum e_{w_i}}}
 where \eqn{w_i} is the weight for indicator \eqn{i}, and \eqn{e_{w_i}} is the
 weighted measurement error:
 
-\deqn{e_{w_i} = (1 - \lambda_i^2) \cdot w_i}
+\deqn{e_{w_i} = (1 - \lambda_i^2) \cdot w_i^2}
 
 Although this metric is labeled \eqn{\rho_c} to align with PLS-SEM
 nomenclature, it is mathematically equivalent to omega and may be reported as

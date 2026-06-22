@@ -24,11 +24,15 @@ is_discrete_variable <- function(x, threshold = 10) {
   # If numeric, check if it's a float or not
   if (is.numeric(x)) {
     x_no_na <- x[!is.na(x)]
-    unique_vals <- unique(x_no_na)
+    if (length(x_no_na) == 0) return(FALSE)
     
+    # If all values are integer-like, it is discrete regardless of threshold
+    is_integer_like <- all(abs(x_no_na - round(x_no_na)) < .Machine$double.eps^0.5)
+    if (is_integer_like) return(TRUE)
+    
+    unique_vals <- unique(x_no_na)
     if (length(unique_vals) <= threshold) {
-      is_integer_like <- all(abs(unique_vals - round(unique_vals)) < .Machine$double.eps^0.5)
-      return(is_integer_like)
+      return(TRUE)
     }
   }
   return(FALSE)

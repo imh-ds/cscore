@@ -208,7 +208,7 @@ correlation_score <- function(
   
   
   # -- IF CALCULATING COMPOSITE SCORE & METRICS -- #
-  if(return_metrics == return_metrics){
+  if(return_metrics == TRUE){
     
     # -- RUN CORRELATION WEIGHTED COMPOSITE SCORING FOR LOWER ORDER -- #
     

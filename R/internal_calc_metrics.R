@@ -44,18 +44,21 @@ calc_metrics <- function(
     # Get weighted loadings squared
     loadings_squared <- (loadings^2)*weights
     
-    # Get weighted errors
-    errors <- (1 - loadings^2)*weights
+    # Get weighted errors for AVE (weighted linearly)
+    errors_ave <- (1 - loadings^2)*weights
+    
+    # Get weighted errors for Reliability (weighted by squared weights)
+    errors_reliability <- (1 - loadings^2)*(weights^2)
     
     
     # Calculate Cronbach's alpha
     alpha <- ltm::cronbach.alpha(df, na.rm = T)$alpha
     
     # Calculate Average Variance Extracted (AVE)
-    ave <- sum(loadings_squared) / (sum(loadings_squared) + sum(errors))
+    ave <- sum(loadings_squared) / (sum(loadings_squared) + sum(errors_ave))
     
-    # Calculate Composite Reliability
-    rhoc <- sum(loadings*weights)^2 / (sum(loadings*weights)^2 + sum(errors))
+    # Calculate Composite Reliability using squared weights for error variance
+    rhoc <- sum(loadings*weights)^2 / (sum(loadings*weights)^2 + sum(errors_reliability))
     
     # Calculate Loadings Range
     min_loading <- min(loadings)

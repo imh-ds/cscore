@@ -64,8 +64,9 @@ calc_mi_composite <- function(
   
   # -- DATA PREPARATION -- #
   
-  # Get dataframe with just indicator vars
-  df <- data[, var]
+  # Get dataframe with just indicator vars (raw)
+  df_raw <- data[, var]
+  df <- df_raw
   
   # Discretize variables where possible
   df <- df |>
@@ -102,30 +103,36 @@ calc_mi_composite <- function(
     
     for (j in i:ncol(df)) {
       
-      # Calculate MI
-      mi_value <- infotheo::mutinformation(
+      # Calculate raw MI (unnormalized)
+      mi_raw <- infotheo::mutinformation(
         df[, i],
         df[, j]
-      ) / sqrt(infotheo::entropy(df[, i], 
-                                 method = entropy) * infotheo::entropy(df[, j], 
-                                                                       method = entropy))
+      )
       
       # Calculate entropy of var i and j
       ent_i <- infotheo::entropy(df[, i],
                                  method = entropy)
-      ent_j <- infotheo::entropy(df[, i],
+      ent_j <- infotheo::entropy(df[, j],
                                  method = entropy)
       
       # Calculate Normalized MI (NMI)
       nmi <- if (nmi_method == "geometric") {
         
         # If NMI option is set to calculate using geometric mean entropy:
-        mi_value / sqrt(ent_i) * sqrt(ent_j)
+        if (ent_i == 0 || ent_j == 0) {
+          0
+        } else {
+          mi_raw / sqrt(ent_i * ent_j)
+        }
         
       } else {
         
         # If NMI option is set to calculate using average entropy:
-        2 * mi_value / (ent_i + ent_j)
+        if (ent_i + ent_j == 0) {
+          0
+        } else {
+          2 * mi_raw / (ent_i + ent_j)
+        }
         
       }
       
@@ -147,8 +154,8 @@ calc_mi_composite <- function(
   # Normalize information weights
   weights <- weights / mean(weights)
   
-  # Calculate unweighted composite score
-  composite_score <- weighted_row_mean(df, weights)
+  # Calculate unweighted composite score on raw data
+  composite_score <- weighted_row_mean(df_raw, weights)
   
   
   
@@ -163,15 +170,13 @@ calc_mi_composite <- function(
   # -- IF CALCULATING COMPOSITE, RELIABILITY, & VALIDITY -- #
   if(return_metrics == TRUE){
     
-    metrics <- calc_metrics(df = df,
+    metrics <- calc_metrics(df = df_raw,
                             composite_score = composite_score,
                             weights = weights,
                             digits = digits,
                             name = name)
     
     return(metrics)
-    
   }
-  
   
 }
