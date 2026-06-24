@@ -132,8 +132,8 @@ calc_discriminant_composite <- function(
     # Extract discriminant parameters
     discrimination <- coef[["items"]][, "a"]
 
-    # Calculate weights
-    discrimination <- discrimination / sum(discrimination)
+    # Normalize discrimination weights
+    discrimination <- safe_normalize(discrimination)
 
     # Warn if any IRT discrimination weights are negative
     if (any(discrimination < 0)) {
@@ -167,11 +167,11 @@ calc_discriminant_composite <- function(
       colnames(df)
     )
 
-    # Normalize weights
-    discrimination <- if (sum(discrimination) == 0) {
+    # Normalize weights; fall back to equal weights if all are effectively zero
+    discrimination <- if (sum(abs(discrimination)) < .Machine$double.eps) {
       rep(1 / length(discrimination), length(discrimination))
     } else {
-      discrimination / sum(discrimination)
+      safe_normalize(discrimination)
     }
 
     # Warn if any PCA/GLM discrimination weights are negative
@@ -193,60 +193,71 @@ calc_discriminant_composite <- function(
     
     # IF GLM PREDICTION-WEIGHTED ----
     if(pred_type %in% c("glm")){
-      
+
+      # Set seed before the lapply so fold assignments are reproducible across
+      # outcomes; each successive call consumes RNG state deterministically.
+      if (!is.null(seed)) set.seed(seed)
+
       # Calculate GLM for each outcome
       glm_coefs <- lapply(
         outcomes,
         function(o){
-          
-          # Fit glm model
+
+          # Build reproducible fold IDs from the seeded RNG state
+          foldid <- sample(rep(seq_len(nfolds), length.out = nrow(df)))
+
+          # Fit elastic net model with fixed folds
           cv_fit <- glmnet::cv.glmnet(
-            x = as.matrix(df), 
-            y = odf[[o]], 
+            x = as.matrix(df),
+            y = odf[[o]],
             alpha = alpha,
-            lower.limits = 0
+            lower.limits = 0,
+            foldid = foldid
           )
-          
+
           # Extract prediction coefficients
           coefficients <- coef(cv_fit, s = "lambda.min")[-1]
-          
-          # Calculate weights
-          if (sum(coefficients) == 0) {
+
+          # Normalize to proportional weights; return zeros when all are zero
+          if (sum(abs(coefficients)) < .Machine$double.eps) {
             rep(0, length(coefficients))
           } else {
-            coefficients / sum(coefficients)
+            safe_normalize(coefficients)
           }
-          
+
         }
       )
-      
+
       # Reduce to a single average vector
       avg_coefs <- purrr::reduce(glm_coefs, `+`) / length(glm_coefs)
-      
-      # Calculation prediction weights
-      prediction <- if (sum(avg_coefs) == 0) {
+
+      # Final prediction weights
+      prediction <- if (sum(abs(avg_coefs)) < .Machine$double.eps) {
         rep(0, length(avg_coefs))
       } else {
-        avg_coefs / sum(avg_coefs)
+        safe_normalize(avg_coefs)
       }
-      
+
     }
     
     # IF RF PREDICTION-WEIGHTED ----
     if(pred_type %in% c("rf")){
-      
+
+      # Set seed before the lapply so fold assignments are reproducible across
+      # outcomes; each successive call consumes RNG state deterministically.
+      if (!is.null(seed)) set.seed(seed)
+
       rf_coefs <- lapply(
         outcomes,
         function(o) {
-          
+
           tdf <- cbind(df, odf[o])
-          
-          folds <- sample(rep(1:nfolds, length.out = nrow(tdf)))
-          
-          results <- purrr::map_dfr(1:nfolds, function(i) {
+
+          folds <- sample(rep(seq_len(nfolds), length.out = nrow(tdf)))
+
+          results <- purrr::map_dfr(seq_len(nfolds), function(i) {
             train_data <- tdf[folds != i, ]
-            test_data  <- tdf[folds == i, ]
-            
+
             fit <- ranger::ranger(
               formula = as.formula(paste(o, "~ .")),
               data = train_data,
@@ -254,36 +265,36 @@ calc_discriminant_composite <- function(
               num.trees = ntrees,
               seed = seed
             )
-            
+
             tibble::tibble(
               variable = names(fit$variable.importance),
               importance = fit$variable.importance,
               fold = i
             )
           })
-          
-          vi_df <- results |> 
-            dplyr::group_by(variable) |> 
-            dplyr::summarise(importance = mean(importance, na.rm = TRUE)) |> 
+
+          vi_df <- results |>
+            dplyr::group_by(variable) |>
+            dplyr::summarise(importance = mean(importance, na.rm = TRUE)) |>
             dplyr::ungroup()
-          
+
           vi_df <- vi_df[match(names(df), vi_df$variable), ]
-          
+
           dplyr::pull(vi_df, importance)
-          
+
         }
       )
-      
+
       # Reduce to a single average vector
       avg_coefs <- purrr::reduce(rf_coefs, `+`) / length(rf_coefs)
-      
-      # Calculation prediction weights
-      prediction <- if (sum(avg_coefs) == 0) {
+
+      # Final prediction weights
+      prediction <- if (sum(abs(avg_coefs)) < .Machine$double.eps) {
         rep(0, length(avg_coefs))
       } else {
-        avg_coefs / sum(avg_coefs)
+        safe_normalize(avg_coefs)
       }
-      
+
     }
     
     # Set names to prediction weights
@@ -291,11 +302,11 @@ calc_discriminant_composite <- function(
     
   }
   
-  # Calculate weights
+  # Combine discrimination and prediction weights (if outcomes provided)
   weights <- if(!is.null(outcomes)) {
-    (discrimination + prediction) / mean((discrimination + prediction))
+    safe_normalize(discrimination + prediction)
   } else {
-    discrimination / mean(discrimination)
+    safe_normalize(discrimination)
   }
   
   # Calculate composite score

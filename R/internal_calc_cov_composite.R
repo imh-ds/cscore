@@ -38,9 +38,36 @@ calc_cov_composite <- function(
 ) {
   
   # -- DATA PREPARATION -- #
-  
+
   # Get dataframe with just indicator vars
   df <- data[, var]
+
+  # -- INPUT VALIDATION -- #
+
+  # All indicators must be numeric
+  non_numeric <- vapply(df, Negate(is.numeric), logical(1))
+  if (any(non_numeric)) {
+    stop(
+      "Non-numeric indicator(s) detected: ",
+      paste(names(df)[non_numeric], collapse = ", "),
+      ". All indicators must be numeric for covariance-family composite scoring.",
+      call. = FALSE
+    )
+  }
+
+  # Zero-variance items produce undefined correlations; warn and note behavior
+  if (weight %in% c("correlation", "regression")) {
+    item_sds <- vapply(df, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+    zero_var <- item_sds == 0 | is.na(item_sds)
+    if (any(zero_var)) {
+      warning(
+        "Zero-variance indicator(s) detected: ",
+        paste(names(df)[zero_var], collapse = ", "),
+        ". Correlations with these items are undefined (NA) and they will receive equal weight.",
+        call. = FALSE
+      )
+    }
+  }
 
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #
@@ -73,8 +100,9 @@ calc_cov_composite <- function(
     cor_weights <- colMeans(cor_matrix,
                             na.rm = T)
 
-    # Normalize correlation weights
-    cor_weights <- cor_weights / mean(cor_weights)
+    # Normalize correlation weights; safe_normalize uses mean(abs(w)) as the
+    # denominator so a near-zero mean from mixed-sign weights cannot explode.
+    cor_weights <- safe_normalize(cor_weights)
 
     # Warn if any weights are negative — likely caused by reverse-keyed items
     if (any(cor_weights < 0)) {
@@ -119,7 +147,7 @@ calc_cov_composite <- function(
       )
 
       # Normalize weights
-      weights <- reg_weights / mean(reg_weights)
+      weights <- safe_normalize(reg_weights)
 
       # Warn if any weights are negative — likely caused by reverse-keyed items
       if (any(weights < 0)) {

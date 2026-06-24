@@ -153,7 +153,7 @@ calc_median_composite <- function(
     if(weight %in% c("median_decay", "median_gauss")){
 
       mweights <- colMeans(weights, na.rm = TRUE)
-      mweights <- mweights / mean(mweights, na.rm = TRUE)
+      mweights <- safe_normalize(mweights)
 
     }
     

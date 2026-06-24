@@ -148,11 +148,10 @@ calc_mi_composite <- function(
   diag(mi_matrix) <- NA
   
   # Get the information weights
-  weights <- colMeans(mi_matrix,
-                      na.rm = T)
-  
+  weights <- colMeans(mi_matrix, na.rm = TRUE)
+
   # Normalize information weights
-  weights <- weights / mean(weights)
+  weights <- safe_normalize(weights)
   
   # Calculate unweighted composite score on raw data
   composite_score <- weighted_row_mean(df_raw, weights)

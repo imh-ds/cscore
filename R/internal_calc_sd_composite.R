@@ -38,33 +38,67 @@ calc_sd_composite <- function(
 ) {
   
   # -- DATA PREPARATION -- #
-  
+
   # Select the numeric variables
   df <- data[, var]
 
-  
+  # -- INPUT VALIDATION -- #
+
+  # All indicators must be numeric
+  non_numeric <- vapply(df, Negate(is.numeric), logical(1))
+  if (any(non_numeric)) {
+    stop(
+      "Non-numeric indicator(s) detected: ",
+      paste(names(df)[non_numeric], collapse = ", "),
+      ". All indicators must be numeric for SD-family composite scoring.",
+      call. = FALSE
+    )
+  }
+
+
   # -- CONDITIONAL COMPOSITE CALCULATION -- #
-  
+
   # IF SD IS UPWEIGHTED ----
   if(weight == "sd_upweight") {
-    
-    sd_weights <- apply(df,
-                        2, 
-                        function(x) stats::sd(x, na.rm = TRUE))
-    
+
+    sd_weights <- vapply(df, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+
+    # Zero-variance items receive weight 0 and are effectively excluded
+    zero_var <- sd_weights == 0 | is.na(sd_weights)
+    if (any(zero_var)) {
+      warning(
+        "Zero-variance indicator(s) in sd_upweight: ",
+        paste(names(df)[zero_var], collapse = ", "),
+        ". These items receive weight 0 and are excluded from the composite.",
+        call. = FALSE
+      )
+      sd_weights[zero_var] <- 0
+    }
+
   }
 
   # IF SD IS DOWNWEIGHTED ----
   if(weight == "sd_downweight") {
-    
-    sd_weights <- 1 / apply(df, 
-                            2, 
-                            function(x) stats::sd(x, na.rm = TRUE))
-    
+
+    raw_sds <- vapply(df, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+
+    # Zero-variance items have SD = 0, so 1/SD is undefined
+    zero_var <- raw_sds == 0 | is.na(raw_sds)
+    if (any(zero_var)) {
+      stop(
+        "Zero-variance indicator(s) detected in sd_downweight: ",
+        paste(names(df)[zero_var], collapse = ", "),
+        ". Downweighting by SD requires non-zero variance in every indicator (1/0 is undefined).",
+        call. = FALSE
+      )
+    }
+
+    sd_weights <- 1 / raw_sds
+
   }
-  
+
   # Normalize weights
-  weights <- sd_weights / mean(sd_weights)
+  weights <- safe_normalize(sd_weights)
   
   # Calculate SD composite score
   composite_score <- weighted_row_mean(df, weights)
