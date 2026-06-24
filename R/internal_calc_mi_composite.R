@@ -57,9 +57,17 @@ calc_mi_composite <- function(
 ) {
   
   # -- MATCH ARGUMENTS -- #
-  
+
   nmi_method <- match.arg(nmi_method)
   entropy <- match.arg(entropy)
+
+  if (!requireNamespace("infotheo", quietly = TRUE)) {
+    stop(
+      "Package 'infotheo' is required for mutual-information composite scoring. ",
+      "Install it with: install.packages(\"infotheo\")",
+      call. = FALSE
+    )
+  }
   
   
   # -- DATA PREPARATION -- #

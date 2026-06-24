@@ -300,6 +300,14 @@ composite_score <- function(
   # Random Forest imputation before scoring with any non-discriminant family.
   if (isTRUE(impute) && !weight %in% c("irt", "pca", "glm")) {
 
+    if (!requireNamespace("missRanger", quietly = TRUE)) {
+      stop(
+        "Package 'missRanger' is required when impute = TRUE. ",
+        "Install it with: install.packages(\"missRanger\")",
+        call. = FALSE
+      )
+    }
+
     all_indicators <- unname(unlist(composite_list[["lower"]]))
     missing_vars <- all_indicators[
       colSums(is.na(data[, all_indicators, drop = FALSE])) > 0

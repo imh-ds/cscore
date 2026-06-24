@@ -117,9 +117,10 @@
 #'   + alpha * sum(abs(beta))}, where \code{beta} is the vector of coefficients.
 #'   When \code{alpha = 1}, the penalty is pure lasso; when \code{alpha = 0}, it
 #'   is ridge regression.
-#' @param nfolds Integer. The number of folds used for random forest k-fold
-#'   cross-validation. Controls how the data are partitioned during resampling.
-#'   Must be at least 2. Default is 10.
+#' @param nfolds Integer. The number of folds used for k-fold cross-validation
+#'   in both the GLM elastic-net path (\code{glmnet::cv.glmnet}) and the
+#'   Random Forest resampling path. Controls how the data are partitioned during
+#'   resampling. Must be at least 2. Default is 10.
 #' @param ntrees Integer. Number of trees to grow in the random forest model.
 #'   Default in \code{ranger} is 500.
 #' @param importance Character string specifying the type of variable importance

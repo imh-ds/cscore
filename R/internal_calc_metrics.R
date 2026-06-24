@@ -60,7 +60,11 @@ calc_metrics <- function(
     # McDonald's omega) better reflects the scoring model. Researchers using
     # non-average weighting schemes are discouraged from reporting alpha as a
     # primary reliability index.
-    alpha <- ltm::cronbach.alpha(df, na.rm = T)$alpha
+    alpha <- if (requireNamespace("ltm", quietly = TRUE)) {
+      ltm::cronbach.alpha(df, na.rm = TRUE)$alpha
+    } else {
+      NA_real_
+    }
 
     # Average Variance Extracted (AVE) — a measure of CONVERGENT validity.
     # AVE >= 0.5 indicates that, on average, the composite explains more

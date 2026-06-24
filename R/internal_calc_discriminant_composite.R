@@ -27,9 +27,10 @@
 #'   + alpha * sum(abs(beta))}, where \code{beta} is the vector of coefficients.
 #'   When \code{alpha = 1}, the penalty is pure lasso; when \code{alpha = 0}, it
 #'   is ridge regression.
-#' @param nfolds Integer. The number of folds used for random forest k-fold
-#'   cross-validation. Controls how the data are partitioned during resampling.
-#'   Must be at least 2. Default is 10.
+#' @param nfolds Integer. The number of folds used for k-fold cross-validation
+#'   in both the GLM elastic-net path (\code{glmnet::cv.glmnet}) and the
+#'   Random Forest resampling path. Controls how the data are partitioned during
+#'   resampling. Must be at least 2. Default is 10.
 #' @param ntrees Integer. Number of trees to grow in the random forest model.
 #'   Default in \code{ranger} is 500.
 #' @param importance Character string specifying the type of variable importance
@@ -110,10 +111,18 @@ calc_discriminant_composite <- function(
   
   
   # -- DISCRIMINANT WEIGHTS CALCULATION -- #
-  
+
   # IF IRT DISCRIMINANT-WEIGHTED ----
   if(weight %in% c("irt")){
-    
+
+    if (!requireNamespace("mirt", quietly = TRUE)) {
+      stop(
+        "Package 'mirt' is required for IRT-weighted composite scoring. ",
+        "Install it with: install.packages(\"mirt\")",
+        call. = FALSE
+      )
+    }
+
     # Run IRT model
     model <- mirt::mirt(
       data = df, 
@@ -194,6 +203,14 @@ calc_discriminant_composite <- function(
     # IF GLM PREDICTION-WEIGHTED ----
     if(pred_type %in% c("glm")){
 
+      if (!requireNamespace("glmnet", quietly = TRUE)) {
+        stop(
+          "Package 'glmnet' is required for GLM predictive weighting. ",
+          "Install it with: install.packages(\"glmnet\")",
+          call. = FALSE
+        )
+      }
+
       # Set seed before the lapply so fold assignments are reproducible across
       # outcomes; each successive call consumes RNG state deterministically.
       if (!is.null(seed)) set.seed(seed)
@@ -242,6 +259,14 @@ calc_discriminant_composite <- function(
     
     # IF RF PREDICTION-WEIGHTED ----
     if(pred_type %in% c("rf")){
+
+      if (!requireNamespace("ranger", quietly = TRUE)) {
+        stop(
+          "Package 'ranger' is required for RF predictive weighting. ",
+          "Install it with: install.packages(\"ranger\")",
+          call. = FALSE
+        )
+      }
 
       # Set seed before the lapply so fold assignments are reproducible across
       # outcomes; each successive call consumes RNG state deterministically.
