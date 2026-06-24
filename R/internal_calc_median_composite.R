@@ -70,43 +70,62 @@ calc_median_composite <- function(
   
   # IF DISTANCE-WEIGHTED ----
   if(weight %in% c("median_decay", "median_gauss")){
-    
+
     # Calculate the median of each row
-    medians <- apply(df, 
-                     1, 
-                     stats::median, 
+    medians <- apply(df,
+                     1,
+                     stats::median,
                      na.rm = TRUE)
-    
-    # Calculate the distance of each variable from the median
-    distances <- sweep(df, 
-                       1, 
-                       medians, 
+
+    # Raw distance of each item from the respondent's median
+    distances <- sweep(df,
+                       1,
+                       medians,
                        FUN = "-")
-    
+
+    # Scale distances by each respondent's observed item range so that
+    # decay_rate and sigma are scale-invariant (a value of 0.5 means the
+    # same thing on a 1-5 Likert scale as on a 1-100 scale). The range is
+    # computed from non-missing items; rows with a single valid item (range 0)
+    # are protected from division by zero.
+    row_ranges <- apply(df, 1, function(x) {
+      x_obs <- x[!is.na(x)]
+      if (length(x_obs) <= 1) return(1)
+      r <- diff(range(x_obs))
+      if (r == 0) 1 else r
+    })
+    distances_scaled <- distances / row_ranges
+
     if(weight == "median_decay"){
-      
-      # Calculate the weights based on the distance from the median using exponential decay function
-      distance_weights <- exp(-decay_rate * abs(distances))
-      
+
+      distance_weights <- exp(-decay_rate * abs(distances_scaled))
+
     }
-    
+
     if(weight == "median_gauss"){
-      
-      # Calculate the weights based on the distance from the median using gaussian function
-      distance_weights <- exp(-(distances^2) / (2 * sigma^2))
-      
+
+      distance_weights <- exp(-(distances_scaled^2) / (2 * sigma^2))
+
     }
 
-    
-    # Normalize weights
-    weights <- distance_weights / rowMeans(distance_weights,
-                                           na.rm = T)
-    
-    # Calculate the weighted composite variable
-    composite_score <- rowMeans(df * weights,
-                                na.rm = TRUE)
+    # Properly normalize weights with NA-safe row-wise renormalization:
+    # zero out weights for missing items so they are excluded from both the
+    # numerator and the denominator, matching the behavior of weighted_row_mean.
+    mask <- !is.na(as.matrix(df))
+    w_mat <- as.matrix(distance_weights)
+    w_mat[!mask] <- 0
+    row_weight_sums <- rowSums(w_mat)
+    row_weight_sums[row_weight_sums == 0] <- NA_real_
+    w_norm <- w_mat / row_weight_sums
 
-    
+    df_mat <- as.matrix(df)
+    df_mat[!mask] <- 0
+    composite_score <- rowSums(df_mat * w_norm, na.rm = FALSE)
+    composite_score[rowSums(mask) == 0] <- NA_real_
+
+    # Retain the weight matrix for metrics reporting
+    weights <- w_norm
+
   }
   
   
@@ -129,13 +148,13 @@ calc_median_composite <- function(
       
     }
     
-    # If distance-to-median composite scoring, get sample-wide weights since 
-    # weights are respondent-level unique
+    # If distance-to-median composite scoring, summarise the respondent-level
+    # weight matrix to sample-wide column means for metrics reporting.
     if(weight %in% c("median_decay", "median_gauss")){
-      
-      mweights <- colMeans(weights, na.rm = T)
-      mweights <- mweights / mean(mweights)
-    
+
+      mweights <- colMeans(weights, na.rm = TRUE)
+      mweights <- mweights / mean(mweights, na.rm = TRUE)
+
     }
     
     metrics <- calc_metrics(df = df,

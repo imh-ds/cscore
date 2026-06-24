@@ -4,9 +4,10 @@
 #'   that go into each respective composite variable.
 #'
 #'
-#' @details Composite scores can be calculated using three median-based
-#' weighting schemes: \strong{unweighted median}, \strong{decay-weighted}, and
-#' \strong{Gaussian-weighted}.
+#' @details Median-based composite scores are designed for \strong{outlier
+#' robustness}: indicators that deviate sharply from the respondent's typical
+#' response pattern receive less weight, so a single extreme or inconsistent
+#' item has limited influence on the composite. Three schemes are supported.
 #'
 #' \emph{Unweighted median.} The median composite score
 #' \eqn{\bar{C}_c^{\mathrm{med}}} for case \eqn{c} is:
@@ -14,44 +15,49 @@
 #' \deqn{\bar{C}_c^{\mathrm{med}} = \mathrm{median}(I_{c1}, I_{c2}, \dots,
 #' I_{cm})}
 #'
-#' where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}, and
-#' \eqn{m} is the number of indicators.
+#' where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c} and
+#' \eqn{m} is the number of indicators. Missing items are excluded row-wise.
 #'
-#' \emph{Decay-weighted median.} For each respondent, let \eqn{M_c} denote the
-#' within-row median:
+#' \emph{Decay-weighted and Gaussian-weighted median.} For each respondent,
+#' let \eqn{M_c} denote the within-row median (missing items excluded) and
+#' \eqn{R_c} the within-row range of observed items:
 #'
-#' \deqn{M_c = \mathrm{median}(I_{c1}, I_{c2}, \dots, I_{cm})}
+#' \deqn{M_c = \mathrm{median}(I_{c1}, \dots, I_{cm}), \quad
+#' R_c = \max_j(I_{cj}) - \min_j(I_{cj})}
 #'
-#' The absolute distance to the median is:
+#' Distances are scaled by \eqn{R_c} to make \code{decay_rate} and
+#' \code{sigma} scale-invariant across different response formats (e.g., 1--5
+#' Likert vs. 0--100 sliders):
 #'
-#' \deqn{D_{cj} = |I_{cj} - M_c|}
+#' \deqn{\tilde{D}_{cj} = \frac{|I_{cj} - M_c|}{R_c}}
 #'
-#' The decay weight for indicator \eqn{j} is then:
+#' For \code{"median_decay"}, the weight for indicator \eqn{j} is:
 #'
-#' \deqn{w_{cj} = \exp(-\gamma \cdot D_{cj})}
+#' \deqn{w_{cj} = \exp(-\gamma \cdot \tilde{D}_{cj})}
 #'
-#' where \eqn{\gamma} is the user-specified \code{decay_rate}. Weights are
-#' row-normalized:
+#' where \eqn{\gamma} is the user-specified \code{decay_rate}. A value of 0.5
+#' means an item at the full range from the median retains weight
+#' \eqn{e^{-0.5} \approx 0.61}.
 #'
-#' \deqn{w_{cj}^{*} = \frac{w_{cj}}{\frac{1}{m} \sum_{k=1}^{m} w_{ck}}}
+#' For \code{"median_gauss"}, the Gaussian weight is:
 #'
-#' The decay-weighted median composite score is:
+#' \deqn{w_{cj} = \exp\!\left(-\frac{\tilde{D}_{cj}^2}{2\sigma^2}\right)}
 #'
-#' \deqn{\bar{C}_c^{\mathrm{decay}} = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_{cj}^{*}}
+#' where \eqn{\sigma} controls the spread relative to the item range. A value
+#' of 0.5 means an item at half the range from the median retains weight
+#' \eqn{e^{-0.5} \approx 0.61}.
 #'
-#' \emph{Gaussian-weighted median.} Using the same distance \eqn{D_{cj}}, the
-#' Gaussian weight is:
+#' Weights are row-normalized with missing-item exclusion: items with missing
+#' values have their weights zeroed out and the remaining weights are rescaled
+#' to sum to 1 before computing:
 #'
-#' \deqn{w_{cj} = \exp\left(-\frac{D_{cj}^2}{2\sigma^2}\right)}
+#' \deqn{\bar{C}_c = \sum_{j=1}^{m} I_{cj} \cdot \tilde{w}_{cj}}
 #'
-#' where \eqn{\sigma} is the user-specified \code{sigma} parameter controlling
-#' the spread. Weights are row-normalized as before, and the final score is:
+#' where \eqn{\tilde{w}_{cj} = w_{cj} / \sum_{k:\, I_{ck} \neq \mathrm{NA}} w_{ck}}.
 #'
-#' \deqn{\bar{C}_c^{\mathrm{gauss}} = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_{cj}^{*}}
-#'
-#' All median-based methods treat each case independently. Weighting is
-#' performed per respondent, allowing differential emphasis on indicators based
-#' on their proximity to the respondent-specific median.
+#' All median-based methods treat each case independently and handle missing
+#' data via row-wise exclusion. Imputation is not required but may be applied
+#' via \code{impute = TRUE} in \code{composite_score()} if desired.
 #'
 #'
 #' @param data A dataframe object. This should be a structured dataset where
@@ -62,12 +68,18 @@
 #'   comprising said composite variable.
 #' @param weight Required weighting schema. Schemas include \code{c("median",
 #'   "median_decay", "median_gauss")}. Default is \code{"median"}.
-#' @param decay_rate A numeric value reflecting the decay rate (i.e.,
-#'   sensitivity) of the distance-to-median weighting schema. The default value
-#'   is set to 0.5.
-#' @param sigma A numeric value reflecting the sigma value for the Gaussian
-#'   function in the distance-to-median weighting schema. The default value is
-#'   set to 0.5.
+#' @param decay_rate Numeric. Decay rate \eqn{\gamma} for \code{"median_decay"}.
+#'   Distances are first scaled by the respondent's item range, so this
+#'   parameter is scale-invariant: \eqn{\gamma = 0.5} means an item at the
+#'   full observed range from the median retains weight \eqn{e^{-0.5} \approx
+#'   0.61}. Larger values penalise outlying items more steeply. Default is
+#'   \code{0.5}.
+#' @param sigma Numeric. Bandwidth \eqn{\sigma} for \code{"median_gauss"}.
+#'   Distances are scaled by the respondent's item range, so \eqn{\sigma} is
+#'   expressed as a proportion of that range: \eqn{\sigma = 0.5} means an item
+#'   at half the range from the median retains weight \eqn{e^{-0.5} \approx
+#'   0.61}. Smaller values make the Gaussian narrower (stronger penalisation).
+#'   Default is \code{0.5}.
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3. This argument is only relevant if \code{return_metrics = TRUE}.
 #' @param return_metrics Logic to determine whether to return reliability and

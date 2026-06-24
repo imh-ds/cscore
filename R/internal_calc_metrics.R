@@ -54,10 +54,20 @@ calc_metrics <- function(
     errors_reliability <- (1 - loadings^2)*(weights^2)
     
     
-    # Calculate Cronbach's alpha
+    # Cronbach's alpha is included for conventional reporting compatibility.
+    # It assumes tau-equivalence (equal loadings) and is most meaningful for
+    # unweighted ("average") composites. For weighted composites, rhoc (weighted
+    # McDonald's omega) better reflects the scoring model. Researchers using
+    # non-average weighting schemes are discouraged from reporting alpha as a
+    # primary reliability index.
     alpha <- ltm::cronbach.alpha(df, na.rm = T)$alpha
-    
-    # Calculate Average Variance Extracted (AVE)
+
+    # Average Variance Extracted (AVE) — a measure of CONVERGENT validity.
+    # AVE >= 0.5 indicates that, on average, the composite explains more
+    # variance in its indicators than is attributable to measurement error.
+    # Note: AVE alone does not establish DISCRIMINANT validity. Discriminant
+    # validity requires cross-construct comparison, e.g., the Fornell-Larcker
+    # criterion (AVE > squared inter-construct correlations) or HTMT < 0.85.
     ave <- sum(loadings_squared) / (sum(loadings_squared) + sum(errors_ave))
     
     # Calculate Composite Reliability using squared weights for error variance
@@ -90,7 +100,7 @@ calc_metrics <- function(
     )
     
     
-    # Compile variable reliability and discriminant validity
+    # Compile variable reliability and convergent validity
     composite_validity <- data.frame(
       alpha = alpha,
       rhoc = rhoc,

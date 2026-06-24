@@ -47,10 +47,13 @@
 #' }
 #' @param digits Integer. The decimal places for the metrics to be rounded to
 #'   when returning metrics. Default is 3.
-#' @param decay_rate Numeric. Reflects the decay rate (i.e., sensitivity) of the
-#'   distance-to-median weighting schema. The default value is set to 0.5.
-#' @param sigma Numeric. Reflects the sigma value for the Gaussian function in
-#'   the distance-to-median weighting schema. The default value is set to 0.5.
+#' @param decay_rate Numeric. Decay rate \eqn{\gamma} for
+#'   \code{"median_decay"}. Distances are scaled by each respondent's item
+#'   range before applying the decay function, making this parameter
+#'   scale-invariant across response formats. Default is \code{0.5}.
+#' @param sigma Numeric. Bandwidth \eqn{\sigma} for \code{"median_gauss"},
+#'   expressed as a proportion of each respondent's item range. Default is
+#'   \code{0.5}.
 #' @param entropy String. Reflects the mutual information entropy estimator from
 #'   the \code{infotheo} package. Four estimators are available: \code{emp} to
 #'   compute the entropy of the empirical probability distribution. Empirical
@@ -118,6 +121,31 @@
 #'     \item \code{"poisson"}: for modeling count data under a Poisson distribution with a log link. The response should be a non-negative count-valued numeric vector.
 #'   }
 #'   Default is \code{"gaussian"}.
+#' @param impute Logical. If \code{TRUE}, missing values in the indicator
+#'   columns are imputed via Random Forest (\code{missRanger::missRanger()})
+#'   before composite scores are computed. Defaults to \code{FALSE}.
+#'
+#'   \strong{Missing-data policy by family:}
+#'   \itemize{
+#'     \item \strong{Covariance} (\code{"average"}, \code{"correlation"},
+#'       \code{"regression"}), \strong{SD} (\code{"sd_upweight"},
+#'       \code{"sd_downweight"}), and \strong{Median} families handle missing
+#'       data natively via row-wise and pairwise \code{na.rm} operations. Each
+#'       respondent's composite is derived from their observed items; no
+#'       imputation is required, though \code{impute = TRUE} may improve
+#'       estimates when missingness is substantial.
+#'     \item \strong{Mutual Information} (\code{"mutual_info"}) discretizes
+#'       variables before computing pairwise NMI; missing values may be
+#'       treated as a spurious discrete category. Imputation is recommended
+#'       when missingness is non-trivial.
+#'     \item \strong{Discriminant} (\code{"irt"}, \code{"pca"}, \code{"glm"})
+#'       always imputes automatically, regardless of this argument, because the
+#'       underlying latent variable models require complete data.
+#'   }
+#'
+#'   Imputation parameters (\code{pmm_k}, \code{maxiter}, \code{ntrees},
+#'   \code{seed}) apply to all imputation steps, including the automatic
+#'   imputation performed by the discriminant family.
 #' @param on_scale_mismatch Character string controlling behavior when indicators
 #'   within a composite appear to be on different response scales (only relevant
 #'   for discriminant-family weights).
@@ -145,11 +173,26 @@
 #'   \code{return_metrics = TRUE}, a list containing the following dataframes is
 #'   returned:
 #'  \itemize{
-#'  \item \strong{Data}: A dataframe with the composite variables appended as new
-#'  variables.
-#'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
-#'  \item \strong{Validity}: A matrix of composite reliability and validity
-#'  metrics.
+#'  \item \strong{Data}: A dataframe with the composite variables appended as
+#'  new variables.
+#'  \item \strong{Metrics}: A matrix of indicator corrected item-total
+#'  correlations (loadings) and indicator weights.
+#'  \item \strong{Validity}: A matrix of composite-level reliability and
+#'  convergent validity metrics, including:
+#'    \itemize{
+#'      \item \code{alpha}: Cronbach's alpha. Reported for conventional
+#'        compatibility; assumes tau-equivalence. Most meaningful for
+#'        \code{weight = "average"}. For weighted composites, prefer
+#'        \code{rhoc}.
+#'      \item \code{rhoc}: Weighted McDonald's omega — a generalization of
+#'        composite reliability that reflects the actual weighting used in
+#'        scoring.
+#'      \item \code{ave}: Average Variance Extracted — a measure of
+#'        \strong{convergent} validity (\eqn{\geq 0.5} is the conventional
+#'        threshold). AVE alone does not establish discriminant validity;
+#'        that requires cross-construct comparison via the Fornell-Larcker
+#'        criterion or HTMT.
+#'    }
 #' }
 #'
 #' @examples
@@ -204,6 +247,7 @@ composite_score <- function(
     importance = c("permutation", "impurity"),
     family = c("gaussian", "binomial", "multinomial", "poisson"),
     on_scale_mismatch = c("warn", "error"),
+    impute = FALSE,
     return_metrics = FALSE,
     digits = 3,
     file = NULL,
@@ -221,7 +265,64 @@ composite_score <- function(
   importance <- match.arg(importance)
   family <- match.arg(family)
   on_scale_mismatch <- match.arg(on_scale_mismatch)
-    
+
+
+  # MISSING DATA WARNINGS ---------------------------------------------------
+
+  # For each lower-order composite, warn if any respondents answered fewer
+  # than 50% of items. Scores for those respondents are still computed from
+  # their observed items, but the user should be aware of the data sparsity.
+  for (comp_name in names(composite_list[["lower"]])) {
+    ind <- composite_list[["lower"]][[comp_name]]
+    if (length(ind) > 1 && all(ind %in% colnames(data))) {
+      comp_df <- data[, ind, drop = FALSE]
+      n_below <- sum(rowSums(!is.na(comp_df)) < (ncol(comp_df) * 0.5))
+      if (n_below > 0) {
+        warning(
+          sprintf(
+            "Composite '%s': %d respondent(s) (%.1f%%) answered fewer than 50%% of items. Their composite scores are extrapolated from a minority of indicators.",
+            comp_name,
+            n_below,
+            100 * n_below / nrow(data)
+          ),
+          call. = FALSE
+        )
+      }
+    }
+  }
+
+
+  # OPTIONAL PRE-IMPUTATION -------------------------------------------------
+
+  # The discriminant family always imputes internally (required by its latent
+  # variable models). All other families handle missing data via na.rm
+  # operations and do not impute by default. Set impute = TRUE to apply
+  # Random Forest imputation before scoring with any non-discriminant family.
+  if (isTRUE(impute) && !weight %in% c("irt", "pca", "glm")) {
+
+    all_indicators <- unname(unlist(composite_list[["lower"]]))
+    missing_vars <- all_indicators[
+      colSums(is.na(data[, all_indicators, drop = FALSE])) > 0
+    ]
+
+    if (length(missing_vars) > 0) {
+      message(
+        "Imputing missing data in: ",
+        paste(missing_vars, collapse = ", "), "."
+      )
+      imputed_data <- missRanger::missRanger(
+        data     = data[, all_indicators, drop = FALSE],
+        pmm.k    = pmm_k,
+        num.trees = ntrees,
+        maxiter  = maxiter,
+        seed     = seed,
+        verbose  = verbose
+      )
+      data[missing_vars] <- imputed_data[missing_vars]
+    }
+
+  }
+
 
   # COVARIANCE FAMILY WEIGHTING ---------------------------------------------
   
