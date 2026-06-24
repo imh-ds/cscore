@@ -118,6 +118,13 @@
 #'     \item \code{"poisson"}: for modeling count data under a Poisson distribution with a log link. The response should be a non-negative count-valued numeric vector.
 #'   }
 #'   Default is \code{"gaussian"}.
+#' @param on_scale_mismatch Character string controlling behavior when indicators
+#'   within a composite appear to be on different response scales (only relevant
+#'   for discriminant-family weights).
+#'   \itemize{
+#'     \item \code{"warn"} (default): issue a \code{warning()} and continue.
+#'     \item \code{"error"}: call \code{stop()} to halt execution.
+#'   }
 #' @param return_metrics Logic. Determines whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
@@ -196,6 +203,7 @@ composite_score <- function(
     ntrees = 100,
     importance = c("permutation", "impurity"),
     family = c("gaussian", "binomial", "multinomial", "poisson"),
+    on_scale_mismatch = c("warn", "error"),
     return_metrics = FALSE,
     digits = 3,
     file = NULL,
@@ -212,6 +220,7 @@ composite_score <- function(
   nmi_method <- match.arg(nmi_method)
   importance <- match.arg(importance)
   family <- match.arg(family)
+  on_scale_mismatch <- match.arg(on_scale_mismatch)
     
 
   # COVARIANCE FAMILY WEIGHTING ---------------------------------------------
@@ -323,6 +332,7 @@ composite_score <- function(
       seed = seed,
       digits = digits,
       alpha = alpha,
+      on_scale_mismatch = on_scale_mismatch,
       return_metrics = return_metrics,
       file = file,
       name = name,

@@ -131,12 +131,22 @@ calc_discriminant_composite <- function(
     
     # Extract discriminant parameters
     discrimination <- coef[["items"]][, "a"]
-    
+
     # Calculate weights
     discrimination <- discrimination / sum(discrimination)
-    
+
+    # Warn if any IRT discrimination weights are negative
+    if (any(discrimination < 0)) {
+      warning(
+        "Negative IRT discrimination weights detected for indicator(s): ",
+        paste(names(discrimination)[discrimination < 0], collapse = ", "),
+        ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
+        call. = FALSE
+      )
+    }
+
   }
-  
+
   # IF PCA-GLM-WEIGHTED ----
   if(weight %in% c("pca", "glm")){
     
@@ -171,7 +181,17 @@ calc_discriminant_composite <- function(
     } else {
       discrimination / sum(discrimination)
     }
-    
+
+    # Warn if any PCA/GLM discrimination weights are negative
+    if (any(discrimination < 0)) {
+      warning(
+        "Negative PCA/GLM discrimination weights detected for indicator(s): ",
+        paste(names(discrimination)[discrimination < 0], collapse = ", "),
+        ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
+        call. = FALSE
+      )
+    }
+
   }
   
   

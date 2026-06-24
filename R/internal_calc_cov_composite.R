@@ -72,18 +72,27 @@ calc_cov_composite <- function(
     # Get the correlation weights
     cor_weights <- colMeans(cor_matrix,
                             na.rm = T)
-    
+
     # Normalize correlation weights
     cor_weights <- cor_weights / mean(cor_weights)
-    
-    
-    
+
+    # Warn if any weights are negative — likely caused by reverse-keyed items
+    if (any(cor_weights < 0)) {
+      warning(
+        "Negative correlation weights detected for indicator(s): ",
+        paste(names(cor_weights)[cor_weights < 0], collapse = ", "),
+        ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
+        call. = FALSE
+      )
+    }
+
+
     # IF CORRELATION-WEIGHTED ----
     if(weight == "correlation"){
-      
+
       # Designate weight
       weights <- cor_weights
-      
+
     }
     
     
@@ -122,7 +131,17 @@ calc_cov_composite <- function(
       
       # Normalize regression weights
       weights <- reg_weights / mean(reg_weights)
-      
+
+      # Warn if any weights are negative — likely caused by reverse-keyed items
+      if (any(weights < 0)) {
+        warning(
+          "Negative regression weights detected for indicator(s): ",
+          paste(names(weights)[weights < 0], collapse = ", "),
+          ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
+          call. = FALSE
+        )
+      }
+
       # Return dataframe to original
       df <- df[, -ncol(df)]
       

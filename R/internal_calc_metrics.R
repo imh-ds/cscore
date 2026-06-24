@@ -30,16 +30,19 @@ calc_metrics <- function(
   name
 ){
   
-  # Get loadings as the correlation between indicator and composite
-  df_loadings <- cbind(
-    composite_score,
-    df
-  )
-  
-  # Get loadings
-  loadings <- stats::cor(
-    df_loadings,
-    use = "pairwise.complete.obs")[,1][-1]
+  # Corrected item-total correlations: each item is correlated with the
+  # weighted composite computed from all *other* items, avoiding part-whole
+  # inflation that inflates loadings, AVE, and reliability when items are
+  # part of the composite they are correlated against.
+  loadings <- sapply(seq_len(ncol(df)), function(j) {
+    rest_idx <- setdiff(seq_len(ncol(df)), j)
+    composite_without_j <- weighted_row_mean(
+      df[, rest_idx, drop = FALSE],
+      weights[rest_idx]
+    )
+    stats::cor(df[, j], composite_without_j, use = "pairwise.complete.obs")
+  })
+  names(loadings) <- colnames(df)
     
     # Get weighted loadings squared
     loadings_squared <- (loadings^2)*weights

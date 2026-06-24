@@ -138,6 +138,14 @@
 #'   output. Defaults to \code{0}.
 #' @param seed An integer seed for reproducibility. Defaults to \code{NULL},
 #'   where no seed is set.
+#' @param on_scale_mismatch Character string controlling behavior when indicators
+#'   within a composite appear to be on different response scales.
+#'   \itemize{
+#'     \item \code{"warn"} (default): issue a \code{warning()} and continue.
+#'       Suitable for interactive use and scripted pipelines.
+#'     \item \code{"error"}: call \code{stop()} to halt execution. Use this when
+#'       you want the pipeline to fail loudly so the problem cannot be overlooked.
+#'   }
 #' @param return_metrics Logic to determine whether to return reliability and
 #'   validity metrics. Set to \code{TRUE} for a list of dataframes with
 #'   reliability and validity metrics.
@@ -211,6 +219,7 @@ discriminant_score <- function(
     ntrees = 100,
     importance = c("permutation", "impurity"),
     family = c("gaussian", "binomial", "multinomial", "poisson"),
+    on_scale_mismatch = c("warn", "error"),
     return_metrics = FALSE,
     seed = NULL,
     file = NULL,
@@ -222,6 +231,7 @@ discriminant_score <- function(
   weight <- match.arg(weight)
   importance <- match.arg(importance)
   family <- match.arg(family)
+  on_scale_mismatch <- match.arg(on_scale_mismatch)
   if (alpha < 0) {alpha <- 0}
   if (alpha > 1) {alpha <- 1}
   
@@ -359,20 +369,21 @@ discriminant_score <- function(
   # Flag if any false in consistency checks
   match_confirm <- all(composite_consistency_check)
   
-  # If any composite does fails, prompt user
+  # If any composite fails the scale consistency check, apply the mismatch policy
   if (isFALSE(match_confirm)) {
-    
-    choice <- menu(
-      choices = c("Yes", "No"),
-      title = "WARNING: One or more composites have indicators that may be on different scales. Do you want to proceed?"
+
+    mismatch_msg <- paste0(
+      "One or more composites have indicators that may be on different scales. ",
+      "Check that all items within each composite share the same response scale ",
+      "before running composite_score()."
     )
-    
-    if (choice != 1) {
-      stop("Execution aborted.")
+
+    if (on_scale_mismatch == "error") {
+      stop(mismatch_msg, call. = FALSE)
+    } else {
+      warning(mismatch_msg, call. = FALSE)
     }
-    
-    message("Proceeding with execution...")
-    
+
   }
   
   
