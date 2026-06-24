@@ -18,7 +18,6 @@ Imports:
     magrittr,
     stringr,
     psych,
-    lm.beta,
     openxlsx,
     ltm,
     infotheo,

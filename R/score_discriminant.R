@@ -30,20 +30,29 @@
 #' \deqn{w_j = \frac{a_j}{\sum_{k=1}^{m} a_k}}
 #'
 #' If \code{weight = "glm"} or \code{"pca"}, a single-factor principal component
-#' analysis (PCA) is conducted. The first factor score is extracted as a latent
-#' proxy \eqn{Z_c}. A penalized linear model is then fit:
+#' analysis (PCA) is conducted and the first principal component (PC1) loadings
+#' \eqn{\lambda_j} are used directly as discrimination weights:
 #'
-#' \deqn{Z_c = \sum_{j=1}^{m} \beta_j \cdot I_{cj} + \varepsilon_c}
+#' \deqn{w_j = \frac{\lambda_j}{\sum_{k=1}^{m} \lambda_k}}
 #'
-#' where \eqn{\beta_j} are estimated using elastic net regularization (via
-#' \pkg{glmnet}). These are normalized analogously to IRT:
-#'
-#' \deqn{w_j = \frac{\beta_j}{\sum_{k=1}^{m} \beta_k}}
+#' PC1 loadings reflect each item's linear contribution to the dominant source
+#' of shared variance. Using loadings directly is the principled, non-circular
+#' choice: the prior approach of regressing PC1 scores back onto the same items
+#' via elastic net was redundant, since PC1 is a deterministic linear function of
+#' those items and the regression could only recover a regularized approximation
+#' of the loadings themselves.
 #'
 #' \strong{2. Predictive weighting from external outcomes (optional).}
 #'
 #' If one or more outcome variables are provided via \code{outcomes}, an
-#' additional predictive weighting stage is applied. Two methods are available:
+#' additional predictive weighting stage is applied. This follows the logic of
+#' PLS-SEM outer weight estimation (Wold, 1982; Hair et al., 2017): indicator
+#' weights are adjusted to maximize the predictive relevance of the composite for
+#' downstream outcomes specified in the DAG model. This is intended for indicator
+#' prioritization and variable reduction, not for confirmatory inference. Because
+#' weights are optimized in-sample for those specific outcomes, the resulting
+#' composite--outcome association reflects optimization, not an unbiased
+#' structural estimate. Two methods are available:
 #'
 #' \emph{(a) Generalized Linear Model (GLM).} Each outcome \eqn{Y} is regressed
 #' on the indicators \eqn{I_{cj}} using elastic net regularization. For each

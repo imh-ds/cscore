@@ -29,20 +29,26 @@
 #'
 #' where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}.
 #'
-#' \emph{Regression-weighted scores.} A linear model is fit with the
-#' correlation-weighted composite scores as the outcome and the indicators as
-#' predictors:
+#' \emph{Regression-weighted scores.} Weights are derived using the Thomson
+#' (1951) regression factor score method. Let \eqn{\mathbf{R}} denote the
+#' \eqn{m \times m} inter-indicator correlation matrix and
+#' \eqn{\boldsymbol{\lambda}} the first principal component (PC1) loading
+#' vector. The regression factor score weights are:
 #'
-#' \deqn{\bar{C}_c = \beta_0 + \sum_{j=1}^{m} \beta_j I_{cj} + \varepsilon_c}
+#' \deqn{\mathbf{w} = \mathbf{R}^{-1} \boldsymbol{\lambda}}
 #'
-#' The regression weights are the standardized coefficients \eqn{\beta_j},
-#' normalized as:
+#' where \eqn{w_j} is the weight for indicator \eqn{j}. Unlike correlation
+#' weighting — which assigns higher weight to items that correlate strongly
+#' with all others — the \eqn{\mathbf{R}^{-1}} term penalizes items that are
+#' redundant with the rest, so each item's weight reflects its unique
+#' contribution to the latent factor after accounting for inter-item overlap.
+#' The weights are normalized:
 #'
-#' \deqn{w_j = \frac{\beta_j}{\frac{1}{m} \sum_{k=1}^{m} \beta_k}}
+#' \deqn{w_j^{*} = \frac{w_j}{\frac{1}{m} \sum_{k=1}^{m} w_k}}
 #'
 #' The regression-weighted composite score is then:
 #'
-#' \deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j}
+#' \deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j^{*}}
 #'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.

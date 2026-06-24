@@ -149,33 +149,25 @@ calc_discriminant_composite <- function(
 
   # IF PCA-GLM-WEIGHTED ----
   if(weight %in% c("pca", "glm")){
-    
-    # Run single factor PCA model
+
+    # Use PC1 loadings directly as discrimination weights. The prior approach
+    # (regressing PC1 scores back on the same items via elastic net) was
+    # circular — PC1 is a deterministic linear function of the items, so the
+    # regression could only recover a regularized approximation of the loadings
+    # themselves, adding CV variance without adding information. PC1 loadings
+    # are the principled, non-circular discriminant weights for this family.
     model <- psych::principal(
       df,
       nfactors = 1,
       rotate = "none"
     )
-    
-    # Extract the latent proxy
-    latent_proxy <- model[["scores"]][,1]
-    
-    # Fit elastic net regression
-    cv_fit <- glmnet::cv.glmnet(
-      x = as.matrix(df),
-      y = latent_proxy,
-      alpha = alpha,
-      standardize = TRUE,
-      nfolds = nfolds
-    )
-    
-    # Extract optimal coefficients (excluding intercept)
+
     discrimination <- setNames(
-      coef(cv_fit, s = "lambda.min")[-1], 
-      names(df)
+      as.vector(model$loadings[, 1]),
+      colnames(df)
     )
-    
-    # Calculate weights
+
+    # Normalize weights
     discrimination <- if (sum(discrimination) == 0) {
       rep(1 / length(discrimination), length(discrimination))
     } else {

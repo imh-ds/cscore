@@ -99,37 +99,26 @@ calc_cov_composite <- function(
     
     # IF REGRESSION-WEIGHTED ----
     if(weight == "regression"){
-      
-      # Write linear model formula
-      lm_formula <- stats::as.formula(
-        paste0(
-          name,
-          "~",
-          paste
-          (var,
-            collapse = " + "
-          )
-        )
+
+      # Thomson (1951) regression factor score weights: w = R^{-1} * lambda_PC1.
+      # Unlike regressing the correlation-weighted composite back on its own
+      # items (circular, since the composite is a linear function of those items),
+      # this derives weights purely from the inter-item correlation structure.
+      # Items that overlap heavily with others are shrunk by R^{-1}, making
+      # regression weighting meaningfully distinct from correlation weighting by
+      # penalizing redundant items.
+      pca_model <- psych::principal(
+        df,
+        nfactors = 1,
+        rotate = "none"
       )
-      
-      # Calculate correlation weighted composite score and save to dataframe
-      df[[name]] <- rowMeans(sweep(df,
-                                   2,
-                                   cor_weights,
-                                   "*"),
-                             na.rm = T)
-      
-      # Calculate regression weights
-      lm_model <- stats::lm(lm_formula,
-                            data = df)
-      
-      # Get regression weights
-      # NOTE: Getting standardized beta coefficients to avoid issues with different scales
-      reg_weights <- stats::coef(
-        lm.beta::lm.beta(lm_model))[setdiff(names(stats::coef(lm_model)),
-                                            "(Intercept)")]
-      
-      # Normalize regression weights
+
+      reg_weights <- setNames(
+        as.vector(pca_model$weights[, 1]),
+        colnames(df)
+      )
+
+      # Normalize weights
       weights <- reg_weights / mean(reg_weights)
 
       # Warn if any weights are negative — likely caused by reverse-keyed items
@@ -142,9 +131,6 @@ calc_cov_composite <- function(
         )
       }
 
-      # Return dataframe to original
-      df <- df[, -ncol(df)]
-      
     }
     
   }
