@@ -228,6 +228,7 @@ calc_discriminant_composite <- function(
             x = as.matrix(df),
             y = odf[[o]],
             alpha = alpha,
+            family = family,
             lower.limits = 0,
             foldid = foldid
           )
