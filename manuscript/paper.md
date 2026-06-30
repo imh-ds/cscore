@@ -14,8 +14,8 @@ affiliations:
     name: Independent Researcher
 
 
-date: 17 December 2025
-year: 2025
+date: 29 June 2026
+year: 2026
 bibliography: paper.bib
 csl: apa.csl
 
@@ -34,7 +34,7 @@ Hohjin Im, Independent Researcher, United States of America. Email: [hohjini\@uc
 
 `cscore` is an R package developed for constructing composite scores from sets of observed indicators (e.g., survey items) using a variety of weighting strategies. Composite scores are commonly used across disciplines to operationalize higher-order constructs for statistical analysis, often through simple averages or sums of items. Although such unit-weighted composites are easy to compute, they depend on restrictive assumptions that are frequently violated in empirical applications.
 
-The package is intended for researchers working with survey data in psychology, behavioral science, business, and related fields, though it is broadly applicable to contexts in which multiple observed variables are aggregated to generate composite measures. `cscore` offers a unified workflow that enables users to specify composites, compare alternative weighting strategies, and, when desired, obtain reliability and validity diagnostics alongside the resulting composite scores.
+The package is intended for researchers working with survey data in psychology, behavioral science, business, and related fields, though it is broadly applicable to contexts in which multiple observed variables are aggregated to generate composite measures. `cscore` offers a unified workflow that enables users to specify composites, compare alternative weighting strategies, and, when desired, obtain reliability and convergent validity diagnostics alongside the resulting composite scores.
 
 # Statement of Need
 
@@ -48,15 +48,16 @@ Departures from tau-equivalence also carry important consequences for reliabilit
 
 Existing R workflows provide only partial remedies to these limitations. Automated scoring utilities, such as `psych::scoreItems()` [@revelle2015psychPackage], streamline the construction of composite variables but offer limited flexibility in weighting strategies beyond unit or keyed scoring. More flexible alternatives rely on latent variable modeling approaches, including factor analysis and structural equation modeling (SEM) implemented in packages such as `lavaan` [@rosseel2012lavaan]. Although these methods can generate factor scores that account for heterogeneous item contributions, they require explicit model specification and separate model fitting for each construct, making them less practical for exploratory analyses or large-scale composite construction. Predictive frameworks such as partial least squares structural equation modeling (PLS-SEM), implemented in packages like `seminr` [@ray2021seminr], can produce variance-optimized composite scores; however, these approaches are tightly coupled to the estimation of a specified predictive model and require the designation of outcome variables, which may not be appropriate or desirable in more exploratory or measurement-focused research settings.
 
-`cscore` addresses these limitations by providing a flexible and extensible framework for composite construction that accommodates heterogeneous item contributions. The package implements a broad range of weighting strategies, including covariance-based methods (e.g., unweighted, correlation-, and regression-based weighting), standard deviation–based approaches (e.g., up- and down-weighting by variability), median-based schemes (e.g., simple median and distance-to-median weighting using exponential or Gaussian functions), information-theoretic methods (e.g., mutual information weighting), and discriminant approaches drawing on Item Response Theory, principal component analysis, and generalized linear modeling. In addition to generating composite scores, `cscore` can optionally return core psychometric diagnostics, such as item–composite loadings and reliability estimates, to support evaluation of measurement quality. These reliability estimates are likewise weighted, consistent with the strategy used.
+`cscore` addresses these limitations by providing a flexible and extensible framework for composite construction that accommodates heterogeneous item contributions. The package implements a broad range of weighting strategies, including methods rooted in covariance (e.g., unweighted, correlation-, and regression-based weighting), standard deviation (e.g., up- and down-weighting by variability), median (e.g., simple median and distance-to-median weighting using exponential or Gaussian functions), information-theory (e.g., mutual information weighting), and discriminant approaches drawing on Item Response Theory, principal component analysis, and generalized linear modeling. In addition to generating composite scores, `cscore` can optionally return core psychometric diagnostics, such as corrected item-total correlations (CITC; each item correlated against the composite built from all other items to avoid part-whole inflation) and reliability estimates (e.g., Cronbach's $\alpha$, weighted generalization of McDonald's $\omega$), to support evaluation of measurement quality. Cronbach's $\alpha$ remains unweighted, and assumes $\tau$-equivalence for consistency with field norms. However, the reliability estimate for $\omega$ is weighted using the designated weighting schema.
 
 For exploratory predictive applications, `cscore` also supports outcome-informed weighting strategies that aim to improve explained variance while incorporating item-level validity information. By restricting this option to discriminant weighting approaches, the framework balances predictive optimization with internal discriminant validity, thereby reducing the risk of overfitting relative to purely variance-driven methods.
 
 # Research Applications
 
-`cscore` has been used in prior publications in the social sciences and business using both primary data [@imShane2024opportunityCalling] and secondary archival data [@im2025behavioralIntegrity] to derive composite scores from multi-item survey instruments. In these applications, the package was used to construct composite variables for subsequent statistical analyses and to assess the indicator loadings and composite reliabilities.
+`cscore` has been used in prior publications in the social sciences and business using both primary data [@imShane2024opportunityCalling; @shane2026] and secondary archival data [@im2025behavioralIntegrity] to derive composite scores from multi-item survey instruments. In these applications, the package was used to construct composite variables for subsequent statistical analyses and to assess the indicator loadings and composite reliabilities.
 
 # Acknowledgements
-No specific funding supported the development of this software. The author used ChatGPT (5.2) to assist with copyediting and language clarity of the manuscript.
+
+No specific funding supported the development of this software. The author used ChatGPT Codex 5.5, Claude Code Opus 4.8 & Sonnet 4.6, and Google Antigravity Gemini 3.5 to assist with coding and package maintenance, as well as ChatGPT 5.5 with the copyediting and language clarity of the manuscript.
 
 # References
