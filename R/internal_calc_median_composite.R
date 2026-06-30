@@ -64,6 +64,20 @@ calc_median_composite <- function(
       call. = FALSE
     )
   }
+
+  if (weight == "median_decay" && decay_rate < 0) {
+    stop(
+      "`decay_rate` must be >= 0 for `weight = \"median_decay\"`.",
+      call. = FALSE
+    )
+  }
+
+  if (weight == "median_gauss" && sigma <= 0) {
+    stop(
+      "`sigma` must be > 0 for `weight = \"median_gauss\"`.",
+      call. = FALSE
+    )
+  }
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #
   
