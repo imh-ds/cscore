@@ -74,6 +74,32 @@ calc_mi_composite <- function(
   
   # Get dataframe with just indicator vars (raw)
   df_raw <- data[, var]
+  
+  # -- INPUT VALIDATION -- #
+
+  # All indicators must be numeric
+  non_numeric <- vapply(df_raw, Negate(is.numeric), logical(1))
+  if (any(non_numeric)) {
+    stop(
+      "Non-numeric indicator(s) detected: ",
+      paste(names(df_raw)[non_numeric], collapse = ", "),
+      ". All indicators must be numeric for mutual-information composite scoring.",
+      call. = FALSE
+    )
+  }
+
+  # Zero-variance items produce 0 entropy/NMI; warn and note behavior
+  item_sds <- vapply(df_raw, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+  zero_var <- item_sds == 0 | is.na(item_sds)
+  if (any(zero_var)) {
+    warning(
+      "Zero-variance indicator(s) detected: ",
+      paste(names(df_raw)[zero_var], collapse = ", "),
+      ". These items have 0 mutual information and will receive weight 0.",
+      call. = FALSE
+    )
+  }
+
   df <- df_raw
   
   # Discretize variables where possible

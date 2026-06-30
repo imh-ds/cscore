@@ -100,15 +100,19 @@ calc_cov_composite <- function(
     cor_weights <- colMeans(cor_matrix,
                             na.rm = T)
 
+    # Zero-variance indicators (or otherwise undefined columns) produce NaN/NA;
+    # replace with 1 so they receive equal baseline weight before normalization.
+    cor_weights[is.na(cor_weights)] <- 1
+
     # Normalize correlation weights; safe_normalize uses mean(abs(w)) as the
     # denominator so a near-zero mean from mixed-sign weights cannot explode.
     cor_weights <- safe_normalize(cor_weights)
 
     # Warn if any weights are negative — likely caused by reverse-keyed items
-    if (any(cor_weights < 0)) {
+    if (any(cor_weights < 0, na.rm = TRUE)) {
       warning(
         "Negative correlation weights detected for indicator(s): ",
-        paste(names(cor_weights)[cor_weights < 0], collapse = ", "),
+        paste(names(cor_weights)[which(cor_weights < 0)], collapse = ", "),
         ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
         call. = FALSE
       )
@@ -135,25 +139,55 @@ calc_cov_composite <- function(
       # Items that overlap heavily with others are shrunk by R^{-1}, making
       # regression weighting meaningfully distinct from correlation weighting by
       # penalizing redundant items.
-      pca_model <- psych::principal(
-        df,
-        nfactors = 1,
-        rotate = "none"
-      )
+      
+      # Handle zero-variance items: run PCA only on non-zero-variance items if at least 2 exist
+      item_sds <- vapply(df, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+      zero_var <- item_sds == 0 | is.na(item_sds)
+      
+      if (any(zero_var)) {
+        non_zero_vars <- names(df)[!zero_var]
+        reg_weights <- numeric(ncol(df))
+        names(reg_weights) <- colnames(df)
+        
+        if (length(non_zero_vars) >= 2) {
+          pca_model <- tryCatch({
+            psych::principal(
+              df[, non_zero_vars, drop = FALSE],
+              nfactors = 1,
+              rotate = "none"
+            )
+          }, error = function(e) NULL)
+          
+          if (!is.null(pca_model)) {
+            reg_weights[non_zero_vars] <- as.vector(pca_model$weights[, 1])
+          } else {
+            reg_weights[non_zero_vars] <- 1
+          }
+        } else {
+          reg_weights[non_zero_vars] <- 1
+        }
+        reg_weights[zero_var] <- 1
+      } else {
+        pca_model <- psych::principal(
+          df,
+          nfactors = 1,
+          rotate = "none"
+        )
 
-      reg_weights <- setNames(
-        as.vector(pca_model$weights[, 1]),
-        colnames(df)
-      )
+        reg_weights <- setNames(
+          as.vector(pca_model$weights[, 1]),
+          colnames(df)
+        )
+      }
 
       # Normalize weights
       weights <- safe_normalize(reg_weights)
 
       # Warn if any weights are negative — likely caused by reverse-keyed items
-      if (any(weights < 0)) {
+      if (any(weights < 0, na.rm = TRUE)) {
         warning(
           "Negative regression weights detected for indicator(s): ",
-          paste(names(weights)[weights < 0], collapse = ", "),
+          paste(names(weights)[which(weights < 0)], collapse = ", "),
           ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
           call. = FALSE
         )

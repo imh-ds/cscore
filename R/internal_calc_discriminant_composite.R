@@ -101,6 +101,31 @@ calc_discriminant_composite <- function(
   # Get dataframe with just indicator vars
   df <- data[, var]
   
+  # -- INPUT VALIDATION -- #
+
+  # All indicators must be numeric
+  non_numeric <- vapply(df, Negate(is.numeric), logical(1))
+  if (any(non_numeric)) {
+    stop(
+      "Non-numeric indicator(s) detected: ",
+      paste(names(df)[non_numeric], collapse = ", "),
+      ". All indicators must be numeric for discriminant-family composite scoring.",
+      call. = FALSE
+    )
+  }
+
+  # Zero-variance check
+  item_sds <- vapply(df, function(x) stats::sd(x, na.rm = TRUE), numeric(1))
+  zero_var <- item_sds == 0 | is.na(item_sds)
+  if (any(zero_var)) {
+    warning(
+      "Zero-variance indicator(s) detected: ",
+      paste(names(df)[zero_var], collapse = ", "),
+      ". These items will receive weight 0 and be excluded from discriminant weighting.",
+      call. = FALSE
+    )
+  }
+  
   # If outcomes are specified, get dataframe with just outcomes
   if(!is.null(outcomes)){
     odf <- data |> 
@@ -124,31 +149,51 @@ calc_discriminant_composite <- function(
     }
 
     # Run IRT model
-    model <- mirt::mirt(
-      data = df, 
-      model = 1, # latent dimension
-      itemtype = item_type,
-      verbose = verbose
-    )
-    
-    # Extract coefficients
-    coef <- mirt::coef(
-      model, 
-      IRTpars = TRUE, 
-      simplify = TRUE
-    )
-    
-    # Extract discriminant parameters
-    discrimination <- coef[["items"]][, "a"]
+    if (any(zero_var)) {
+      non_zero_vars <- names(df)[!zero_var]
+      discrimination <- numeric(ncol(df))
+      names(discrimination) <- colnames(df)
+      
+      if (length(non_zero_vars) >= 2) {
+        model <- mirt::mirt(
+          data = df[, non_zero_vars, drop = FALSE], 
+          model = 1, # latent dimension
+          itemtype = item_type,
+          verbose = verbose
+        )
+        coef <- mirt::coef(
+          model, 
+          IRTpars = TRUE, 
+          simplify = TRUE
+        )
+        discrimination[non_zero_vars] <- coef[["items"]][, "a"]
+      } else {
+        discrimination[non_zero_vars] <- 1
+      }
+      discrimination[zero_var] <- 0
+    } else {
+      model <- mirt::mirt(
+        data = df, 
+        model = 1, # latent dimension
+        itemtype = item_type,
+        verbose = verbose
+      )
+      coef <- mirt::coef(
+        model, 
+        IRTpars = TRUE, 
+        simplify = TRUE
+      )
+      discrimination <- coef[["items"]][, "a"]
+    }
 
     # Normalize discrimination weights
     discrimination <- safe_normalize(discrimination)
 
     # Warn if any IRT discrimination weights are negative
-    if (any(discrimination < 0)) {
+    if (any(discrimination < 0, na.rm = TRUE)) {
       warning(
         "Negative IRT discrimination weights detected for indicator(s): ",
-        paste(names(discrimination)[discrimination < 0], collapse = ", "),
+        paste(names(discrimination)[which(discrimination < 0)], collapse = ", "),
         ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
         call. = FALSE
       )
@@ -165,29 +210,54 @@ calc_discriminant_composite <- function(
     # regression could only recover a regularized approximation of the loadings
     # themselves, adding CV variance without adding information. PC1 loadings
     # are the principled, non-circular discriminant weights for this family.
-    model <- psych::principal(
-      df,
-      nfactors = 1,
-      rotate = "none"
-    )
+    if (any(zero_var)) {
+      non_zero_vars <- names(df)[!zero_var]
+      discrimination <- numeric(ncol(df))
+      names(discrimination) <- colnames(df)
+      
+      if (length(non_zero_vars) >= 2) {
+        model <- tryCatch({
+          psych::principal(
+            df[, non_zero_vars, drop = FALSE],
+            nfactors = 1,
+            rotate = "none"
+          )
+        }, error = function(e) NULL)
+        
+        if (!is.null(model)) {
+          discrimination[non_zero_vars] <- as.vector(model$loadings[, 1])
+        } else {
+          discrimination[non_zero_vars] <- 1
+        }
+      } else {
+        discrimination[non_zero_vars] <- 1
+      }
+      discrimination[zero_var] <- 0
+    } else {
+      model <- psych::principal(
+        df,
+        nfactors = 1,
+        rotate = "none"
+      )
 
-    discrimination <- setNames(
-      as.vector(model$loadings[, 1]),
-      colnames(df)
-    )
+      discrimination <- setNames(
+        as.vector(model$loadings[, 1]),
+        colnames(df)
+      )
+    }
 
     # Normalize weights; fall back to equal weights if all are effectively zero
-    discrimination <- if (sum(abs(discrimination)) < .Machine$double.eps) {
+    discrimination <- if (sum(abs(discrimination), na.rm = TRUE) < .Machine$double.eps) {
       rep(1 / length(discrimination), length(discrimination))
     } else {
       safe_normalize(discrimination)
     }
 
     # Warn if any PCA/GLM discrimination weights are negative
-    if (any(discrimination < 0)) {
+    if (any(discrimination < 0, na.rm = TRUE)) {
       warning(
         "Negative PCA/GLM discrimination weights detected for indicator(s): ",
-        paste(names(discrimination)[discrimination < 0], collapse = ", "),
+        paste(names(discrimination)[which(discrimination < 0)], collapse = ", "),
         ". This typically indicates reverse-keyed items. Please recode them before running composite_score().",
         call. = FALSE
       )

@@ -52,6 +52,18 @@ calc_median_composite <- function(
   # Get dataframe with just indicator vars
   df <- data[, var]
   
+  # -- INPUT VALIDATION -- #
+
+  # All indicators must be numeric
+  non_numeric <- vapply(df, Negate(is.numeric), logical(1))
+  if (any(non_numeric)) {
+    stop(
+      "Non-numeric indicator(s) detected: ",
+      paste(names(df)[non_numeric], collapse = ", "),
+      ". All indicators must be numeric for median-family composite scoring.",
+      call. = FALSE
+    )
+  }
   
   # -- CONDITIONAL COMPOSITE CALCULATION -- #
   
