@@ -1,86 +1,224 @@
 #' Calculate Discriminant-Weighted Composite Scores
 #'
 #'
-#' @description Create composite scores of scales by specifying the indicators
-#'   that go into each respective composite variable.
+#' @description Create lower- and higher-order composite scores from named sets
+#'   of numeric indicators using discrimination-based weights derived either
+#'   from a unidimensional latent-variable model or from the first principal
+#'   component, with an optional predictive reweighting stage based on external
+#'   downstream outcomes.
 #'
-#' @details Discriminant composite scores combine psychometric discrimination
-#' and predictive utility into a single weighting schema. Two primary
-#' discriminant sources are supported: \strong{latent composite loadings} and
-#' \strong{predictive weights}. The composite score for case \eqn{c} is computed
-#' as:
+#' @details
 #'
-#' \deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j^{*}}
+#' Discriminant composite scoring is implemented by \code{discriminant_score()},
+#' \code{calc_discriminant_composite()}, \code{safe_normalize()},
+#' \code{weighted_row_mean()}, \code{calc_metrics()}, and, when a structural
+#' model is supplied, \code{expand_lower_paths()}. The code defines the
+#' procedure operationally as follows.
 #'
-#' where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}, and
-#' \eqn{w_j^{*}} is the final normalized weight. The weighting includes two
-#' stages:
+#' \strong{1. Preprocessing and ordering.}
 #'
-#' \strong{1. Discriminant weighting from latent structure.}
+#' The supplied \code{composite_list} is split into lower-order composites
+#' (defined directly by observed indicators) and higher-order composites
+#' (defined by previously computed composites). Lower-order composites are
+#' always scored first. If higher-order composites are present, they are then
+#' scored from the newly appended lower-order composite columns.
 #'
-#' If \code{weight = "irt"}, a unidimensional Item Response Theory (IRT) model
-#' is estimated:
+#' Before any discriminant weights are estimated, the function inspects all
+#' lower-order indicators for missing values. If any are missing, only those
+#' lower-order indicator columns are imputed using
+#' \code{missRanger::missRanger()} with the user-supplied \code{pmm_k},
+#' \code{ntrees}, \code{maxiter}, \code{seed}, and \code{verbose} settings.
+#' The imputed values replace only the original missing lower-order indicator
+#' cells before the composite-scoring stage begins.
 #'
-#' \deqn{P(Y_{cj} = 1) = \mathrm{logit}^{-1}(a_j \cdot \theta_c + b_j)}
+#' The function also checks whether indicators within each lower-order composite
+#' appear to share the same response scale. A composite is treated as
+#' approximately continuous if any indicator has more than 15 unique values; in
+#' that case the within-composite scale-consistency check is skipped. Otherwise,
+#' the check requires all indicators in that composite to have the same number
+#' of unique observed values. If any composite fails this test, the function
+#' either warns or errors according to \code{on_scale_mismatch}.
 #'
-#' where \eqn{a_j} is the discrimination parameter for indicator \eqn{j}, and
-#' \eqn{\theta_c} is the latent trait estimate for case \eqn{c}. The
-#' discrimination parameters \eqn{a_j} are extracted and normalized:
+#' If a \code{composite_model} is supplied, its path table is expanded so that
+#' any higher-order predictor in the \code{from} column is duplicated by its
+#' immediate lower-order components. The expanded model is then used to identify
+#' which composites should receive predictive reweighting from downstream
+#' outcomes and in what topological order they should be scored.
 #'
-#' \deqn{w_j = \frac{a_j}{\sum_{k=1}^{m} a_k}}
+#' \strong{2. Casewise composite formula.}
 #'
-#' If \code{weight = "glm"} or \code{"pca"}, a single-factor principal component
-#' analysis (PCA) is conducted and the first principal component (PC1) loadings
-#' \eqn{\lambda_j} are used directly as discrimination weights:
+#' For any composite with indicator matrix
+#' \eqn{\mathbf{X} = [x_{cj}]} of dimension \eqn{N \times m}, the final
+#' composite score is computed by \code{weighted_row_mean()} using only the
+#' indicators observed for each case. If \eqn{O_c} is the set of non-missing
+#' indicators for case \eqn{c}, then
 #'
-#' \deqn{w_j = \frac{\lambda_j}{\sum_{k=1}^{m} \lambda_k}}
+#' \deqn{C_c = \frac{\sum_{j \in O_c} x_{cj} w_j^{*}}{\sum_{j \in O_c}|w_j^{*}|}}
 #'
-#' PC1 loadings reflect each item's linear contribution to the dominant source
-#' of shared variance. Using loadings directly is the principled, non-circular
-#' choice: the prior approach of regressing PC1 scores back onto the same items
-#' via elastic net was redundant, since PC1 is a deterministic linear function of
-#' those items and the regression could only recover a regularized approximation
-#' of the loadings themselves.
+#' where \eqn{w_j^{*}} denotes the final normalized weight for indicator
+#' \eqn{j}. If all indicators are missing for a case, \eqn{C_c} is \code{NA}.
+#' This is the exact casewise scoring rule used by the code; when all weights
+#' are positive, it reduces to the usual weighted mean over the observed
+#' indicators.
 #'
-#' \strong{2. Predictive weighting from external outcomes (optional).}
+#' The normalization used throughout is \code{safe_normalize()}, which divides a
+#' raw weight vector by its mean absolute value:
 #'
-#' If one or more outcome variables are provided via \code{outcomes}, an
-#' additional predictive weighting stage is applied. This follows the logic of
-#' PLS-SEM outer weight estimation (Wold, 1982; Hair et al., 2017): indicator
-#' weights are adjusted to maximize the predictive relevance of the composite for
-#' downstream outcomes specified in the DAG model. This is intended for indicator
-#' prioritization and variable reduction, not for confirmatory inference. Because
-#' weights are optimized in-sample for those specific outcomes, the resulting
-#' composite--outcome association reflects optimization, not an unbiased
-#' structural estimate. Two methods are available:
+#' \deqn{w_j^{*} = \frac{w_j}{\frac{1}{m}\sum_{k=1}^{m}|w_k|}}
 #'
-#' \emph{(a) Generalized Linear Model (GLM).} Each outcome \eqn{Y} is regressed
-#' on the indicators \eqn{I_{cj}} using elastic net regularization. For each
-#' fitted model, the normalized coefficients \eqn{\gamma_j^{(r)}} are extracted.
-#' The final predictive weights are averaged over all outcomes:
+#' This choice is important because it is also the mechanism that stabilizes the
+#' algorithm when weights contain a mixture of positive and negative values.
 #'
-#' \deqn{p_j = \frac{1}{R} \sum_{r=1}^{R} \gamma_j^{(r)}}
+#' \strong{3. Latent discrimination weights.}
 #'
-#' where \eqn{R} is the number of outcomes. The predictive weights are then
-#' normalized:
+#' For each composite, \code{calc_discriminant_composite()} first extracts the
+#' indicator data frame \code{df <- data[, var]}. All indicators must be
+#' numeric. Indicators with zero variance are identified by
+#' \code{sd(x, na.rm = TRUE) == 0} (or \code{NA} after removing missingness) and
+#' are treated specially: they trigger a warning and are assigned raw
+#' discrimination weight 0.
 #'
-#' \deqn{p_j^{*} = \frac{p_j}{\sum_{k=1}^{m} p_k}}
+#' If \code{weight = "irt"}, the function fits a unidimensional
+#' \code{mirt::mirt(..., model = 1)} model to the non-zero-variance indicators,
+#' using the user-supplied \code{item_type}. The discrimination coefficients
+#' \eqn{a_j} are extracted from \code{mirt::coef(..., IRTpars = TRUE,
+#' simplify = TRUE)[["items"]][, "a"]}. If at least two non-zero-variance
+#' indicators are available, those coefficients become the raw discrimination
+#' weights; if fewer than two remain, any non-zero-variance indicator falls back
+#' to raw weight 1 while zero-variance indicators remain at 0. The resulting
+#' vector is then normalized with \code{safe_normalize()}.
 #'
-#' \emph{(b) Random Forest (RF).} Each outcome \eqn{Y} is predicted via a random
-#' forest, and variable importance scores (e.g., permutation or impurity) are
-#' extracted for each indicator. These are averaged across outcomes and
-#' normalized in the same manner as the GLM approach (see step a above).
+#' If \code{weight = "pca"} or \code{weight = "glm"}, the latent discrimination
+#' stage is identical: the function runs
+#' \code{psych::principal(..., nfactors = 1, rotate = "none")} on the
+#' non-zero-variance indicators and uses the first principal-component loadings
+#' directly as raw discrimination weights. Thus, in the current implementation,
+#' \code{"glm"} and \code{"pca"} do \emph{not} differ in their latent weighting
+#' stage. The \code{"glm"} label persists only because predictive reweighting,
+#' described next, may use GLM-based outcome models. If the PCA fit fails, the
+#' non-zero-variance indicators fall back to raw weight 1 and zero-variance
+#' indicators remain at 0. If the entire discrimination vector is effectively
+#' zero, the code falls back to equal weights
+#' \eqn{(1/m, \ldots, 1/m)} before normalization.
 #'
-#' \strong{3. Final weight aggregation.}
+#' Negative latent discrimination weights trigger a warning because they often
+#' indicate reverse-keyed items that have not been recoded. The function does
+#' not reverse-score such items automatically.
 #'
-#' If predictive weights \eqn{p_j^{*}} are available, they are combined with the
-#' latent discrimination weights \eqn{w_j} to form final composite weights:
+#' \strong{4. Optional predictive reweighting from outcomes.}
 #'
-#' \deqn{w_j^{*} = \frac{w_j + p_j^{*}}{\frac{1}{m} \sum_{k=1}^{m} (w_k +
-#' p_k^{*})}}
+#' Predictive weighting occurs only when \code{outcomes} are supplied to
+#' \code{calc_discriminant_composite()}, which in practice happens when
+#' \code{discriminant_score()} is called with a non-\code{NULL}
+#' \code{composite_model} and the current composite appears as a predictor in
+#' the expanded path table. The downstream outcomes are then extracted from
+#' \code{data[, outcomes]}.
 #'
-#' If no predictive targets are provided, \eqn{w_j^{*}} defaults to normalized
-#' discrimination weights.
+#' Two predictive engines are supported.
+#'
+#' If \code{pred_type = "glm"}, the function fits one elastic-net model per
+#' outcome using \code{glmnet::cv.glmnet()} with design matrix
+#' \eqn{\mathbf{X}} equal to the composite's indicators and response equal to
+#' the selected outcome. For each outcome \eqn{r = 1, \ldots, R}, the model uses
+#' \code{alpha = alpha}, \code{family = family}, \code{lower.limits = 0}, and a
+#' reproducible fold assignment
+#' \eqn{\mathrm{foldid}_c \in \{1, \ldots, K\}} generated by
+#' \code{sample(rep(seq_len(nfolds), length.out = nrow(df)))} after setting the
+#' user-supplied seed once before the outcome loop. The coefficient vector at
+#' \code{s = "lambda.min"} is extracted, its intercept is discarded, and the
+#' remaining coefficients are normalized with \code{safe_normalize()} unless
+#' they are all essentially zero, in which case that outcome contributes a zero
+#' vector. The per-outcome coefficient vectors are then averaged:
+#'
+#' \deqn{\bar{\boldsymbol{\gamma}} = \frac{1}{R}\sum_{r=1}^{R}\boldsymbol{\gamma}^{(r)}}
+#'
+#' and normalized again with \code{safe_normalize()} unless the average vector
+#' is itself essentially zero.
+#'
+#' Because \code{lower.limits = 0} is passed to \code{cv.glmnet()}, the GLM
+#' predictive stage constrains coefficients to be nonnegative in the fitted
+#' model.
+#'
+#' If \code{pred_type = "rf"}, the function performs a manual
+#' \eqn{K}-fold resampling procedure for each outcome. For outcome \eqn{r}, the
+#' indicator matrix and that outcome are combined, fold labels are sampled using
+#' the same seeded strategy described above, and for each fold a
+#' \code{ranger::ranger()} model is fitted on the training partition only, using
+#' \code{importance = importance}, \code{num.trees = ntrees}, and
+#' \code{seed = seed}. The resulting variable-importance values are averaged
+#' across folds for each indicator, re-ordered to match the indicator columns,
+#' and then averaged across outcomes. As in the GLM case, the final predictive
+#' vector is normalized with \code{safe_normalize()} unless it is effectively
+#' zero, in which case a zero vector is used.
+#'
+#' \strong{5. Final weight aggregation.}
+#'
+#' Let \eqn{\mathbf{d}} denote the normalized latent discrimination vector and
+#' \eqn{\mathbf{p}} the normalized predictive vector, if present. The final
+#' weights are:
+#'
+#' \deqn{\mathbf{w}^{*} =
+#' \frac{\mathbf{d} + \mathbf{p}}
+#' {\frac{1}{m}\sum_{j=1}^{m}|d_j + p_j|}}
+#'
+#' when predictive weighting is available, and
+#'
+#' \deqn{\mathbf{w}^{*} =
+#' \frac{\mathbf{d}}
+#' {\frac{1}{m}\sum_{j=1}^{m}|d_j|}}
+#'
+#' otherwise. These formulas reflect the exact implementation, since the code
+#' combines the latent and predictive vectors additively and then applies
+#' \code{safe_normalize()} to the sum.
+#'
+#' \strong{6. Higher-order composites and structural-model behavior.}
+#'
+#' When higher-order composites are scored in the main \code{discriminant_score()}
+#' workflow, the implementation always calls
+#' \code{calc_discriminant_composite(..., weight = "pca")} regardless of the
+#' user-supplied \code{weight}. This is done because higher-order indicators are
+#' themselves already continuous composite scores rather than original item
+#' responses. Consequently, IRT weighting is only used for lower-order
+#' composites built directly from item-level indicators.
+#'
+#' If a \code{composite_model} is supplied, composites that are terminal
+#' outcomes in the model are first scored without outcome-based predictive
+#' reweighting. Composites that serve as predictors in the expanded path table
+#' are then rescored in topological order using the corresponding model-implied
+#' downstream outcomes. In this sense, the structural model affects only the
+#' optional predictive augmentation of the weights, not the basic latent
+#' discrimination step.
+#'
+#' \strong{7. Reliability and validity metrics.}
+#'
+#' When \code{return_metrics = TRUE}, the downstream metrics are computed by
+#' \code{calc_metrics()} using the final normalized weights and the composite
+#' score produced above. The reported item loadings are corrected item-total
+#' correlations rather than raw correlations with the full composite that
+#' contains the focal item. For indicator \eqn{j}, the implemented loading is
+#'
+#' \deqn{\lambda_j = \mathrm{cor}\!\left(x_j,\,
+#' \frac{\sum_{k \neq j} x_k w_k^{*}}{\sum_{k \neq j}|w_k^{*}|}\right)}
+#'
+#' computed with pairwise-complete observations. This avoids part-whole
+#' inflation. The same downstream metric formulas documented for
+#' \code{correlation_score()} then apply:
+#'
+#' \deqn{\mathrm{AVE} =
+#' \frac{\sum_{j=1}^{m}\lambda_j^2 w_j^{*}}
+#' {\sum_{j=1}^{m}\lambda_j^2 w_j^{*} +
+#'  \sum_{j=1}^{m}(1-\lambda_j^2) w_j^{*}}}
+#'
+#' \deqn{\rho_c =
+#' \frac{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2}
+#' {\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2 +
+#'  \sum_{j=1}^{m}(1-\lambda_j^2)(w_j^{*})^2}}
+#'
+#' Cronbach's alpha is obtained from \code{ltm::cronbach.alpha()} when
+#' \pkg{ltm} is installed and otherwise returned as \code{NA}. As with the
+#' other weighted scoring functions in the package, the weighted composite
+#' reliability \eqn{\rho_c} is the metric that most directly reflects the
+#' implemented scoring model.
 #'
 #' @param data A dataframe object. This should be a structured dataset where
 #'   each column represents a variable and each row represents an observation.
@@ -276,6 +414,14 @@ discriminant_score <- function(
   
   # If there is any missingness across the indicators, impute using Random Forest
   if(length(missing_vars) > 0){
+
+    if (!requireNamespace("missRanger", quietly = TRUE)) {
+      stop(
+        "Package 'missRanger' is required when lower-order indicators contain missing data. ",
+        "Install it with: install.packages(\"missRanger\")",
+        call. = FALSE
+      )
+    }
     
     # Message with variable names
     message(
