@@ -115,7 +115,7 @@ calc_mi_composite <- function(
   discrete_flags <- unlist(
     lapply(
       names(df),
-      function(x) is_discrete_variable(df[[x]])
+      function(x) is_discrete_variable(df[[x]], threshold = threshold)
     )
   )
   
