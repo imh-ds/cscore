@@ -269,6 +269,10 @@ export_metrics <- function(
     textDecoration = "bold"
   )
 
+  boldStyle <- openxlsx::createStyle(
+    textDecoration = "bold"
+  )
+
 
   # WRITE METRICS -----------------------------------------------------------
 
@@ -579,6 +583,13 @@ export_metrics <- function(
     widths = 15
   )
 
+  openxlsx::setColWidths(
+    wb,
+    "Validity",
+    cols = 3,
+    widths = 11
+  )
+
   # Keep the footnote column at a readable fixed width rather than letting the
   # long note force the full table identifier column to become too wide.
   openxlsx::setColWidths(
@@ -604,7 +615,8 @@ export_metrics <- function(
       "HTMT = Heterotrait-Monotrait; DV = Discriminant Validity."
     ),
     startCol = start_col,
-    startRow = footnote_row_1
+    startRow = footnote_row_1,
+    colNames = FALSE
   )
 
   openxlsx::writeData(
@@ -627,33 +639,79 @@ export_metrics <- function(
   openxlsx::writeData(
     wb,
     "Validity",
-    x = paste0(
-      "FL: PASS when sqrt(AVE) > max absolute inter-construct correlation; ",
-      "otherwise FAIL."
-    ),
+    x = "Fornell-Larcker Criterion (FL):",
     startCol = start_col,
-    startRow = footnote_row_fl
+    startRow = footnote_row_fl,
+    colNames = FALSE
+  )
+
+  openxlsx::addStyle(
+    wb,
+    "Validity",
+    style = boldStyle,
+    rows = footnote_row_fl,
+    cols = start_col
   )
 
   openxlsx::writeData(
     wb,
     "Validity",
-    x = paste0(
-      "HTMT: PASS when max HTMT < cutoff; otherwise FAIL."
-    ),
-    startCol = start_col,
-    startRow = footnote_row_htmt
+    x = "PASS when sqrt(AVE) > max absolute inter-construct correlation; otherwise FAIL.",
+    startCol = start_col + 1,
+    startRow = footnote_row_fl,
+    colNames = FALSE
   )
 
   openxlsx::writeData(
     wb,
     "Validity",
-    x = paste0(
-      "DV: PASS when all available discriminant-validity checks pass; ",
-      "otherwise FAIL."
-    ),
+    x = "Heterotrait-Monotrait Ratio of Correlations (HTMT):",
     startCol = start_col,
-    startRow = footnote_row_dv
+    startRow = footnote_row_htmt,
+    colNames = FALSE
+  )
+
+  openxlsx::addStyle(
+    wb,
+    "Validity",
+    style = boldStyle,
+    rows = footnote_row_htmt,
+    cols = start_col
+  )
+
+  openxlsx::writeData(
+    wb,
+    "Validity",
+    x = "PASS when max HTMT < cutoff; otherwise FAIL.",
+    startCol = start_col + 1,
+    startRow = footnote_row_htmt,
+    colNames = FALSE
+  )
+
+  openxlsx::writeData(
+    wb,
+    "Validity",
+    x = "Discriminant Validity Check (DV):",
+    startCol = start_col,
+    startRow = footnote_row_dv,
+    colNames = FALSE
+  )
+
+  openxlsx::addStyle(
+    wb,
+    "Validity",
+    style = boldStyle,
+    rows = footnote_row_dv,
+    cols = start_col
+  )
+
+  openxlsx::writeData(
+    wb,
+    "Validity",
+    x = "PASS when all available discriminant-validity checks pass; otherwise FAIL.",
+    startCol = start_col + 1,
+    startRow = footnote_row_dv,
+    colNames = FALSE
   )
   
   # Hide gridlines
