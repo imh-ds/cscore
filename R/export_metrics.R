@@ -408,8 +408,8 @@ export_metrics <- function(
   vl <- vl %>% 
     dplyr::rename(
       "Composite" = composite,
-      "\u03B1" = alpha,        # Cronbach's alpha
-      "\u03C1C" = rhoc,        # Composite reliability rho c
+      "alpha" = alpha,
+      "rho_c" = rhoc,
       "AVE" = ave,
       "sqrt(AVE)" = sqrt_ave,
       "max |r|" = max_interconstruct_corr,
@@ -417,8 +417,8 @@ export_metrics <- function(
       "max HTMT" = max_htmt,
       "HTMT" = htmt,
       "DV" = discriminant_validity,
-      "\u03BB \u2208" = loading_range,
-      "W \u2208" = weight_range
+      "loading range" = loading_range,
+      "weight range" = weight_range
     ) %>% 
     
     # Replace _ with space
@@ -462,6 +462,32 @@ export_metrics <- function(
     x = vl,
     startCol = start_col,
     startRow = start_row + 2)
+
+  # Replace the ASCII-safe internal headers with publication-style worksheet
+  # labels after writing the table so the parsed R source stays ASCII-safe.
+  validity_headers <- c(
+    "Composite",
+    "\u03B1",
+    "\u03C1c",
+    "AVE",
+    "\u03BB \u2208",
+    "W \u2208",
+    "sqrt(AVE)",
+    "max |r|",
+    "FL",
+    "max HTMT",
+    "HTMT",
+    "DV"
+  )
+
+  openxlsx::writeData(
+    wb = wb,
+    sheet = "Validity",
+    x = as.list(validity_headers),
+    startCol = start_col,
+    startRow = start_row + 2,
+    colNames = FALSE
+  )
   
   
   # Apply the style to the header (row 1, column 1)
@@ -544,6 +570,13 @@ export_metrics <- function(
     "Validity",
     cols = start_col:(start_col + ncol(vl) - 1),
     widths = "auto"
+  )
+
+  openxlsx::setColWidths(
+    wb,
+    "Validity",
+    cols = c(6, 7),
+    widths = 15
   )
 
   # Keep the footnote column at a readable fixed width rather than letting the
