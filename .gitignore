@@ -50,3 +50,7 @@ rsconnect/
 
 # WIP folder
 /notebook/
+
+# AI Agent folders
+.claude/
+.agents/

@@ -21,6 +21,9 @@
 #'   the list represents a composite variable, and the corresponding vector
 #'   contains the column names that are associated with the indicators
 #'   comprising said composite variable.
+#' @param htmt_cutoff Numeric threshold used for HTMT PASS/FAIL classification
+#'   in the discriminant-validity summary returned when
+#'   \code{return_metrics = TRUE}. Default is \code{0.90}.
 #' @param digits The decimal places for the metrics to be rounded to. Default is
 #'   3. This argument is only relevant if \code{return_metrics = TRUE}.
 #' @param return_metrics Logic to determine whether to return reliability and
@@ -42,6 +45,12 @@
 #'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
 #'  \item \strong{Validity}: A matrix of composite reliability and validity
 #'  metrics.
+#'  \item \strong{Discriminant Summary}: A matrix of reporting-set
+#'  discriminant-validity statistics and PASS/FAIL results.
+#'  \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+#'  \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+#'  correlations.
+#'  \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 #' }
 #'
 #' @examples
@@ -82,6 +91,7 @@
 average_score <- function(
     data = .,
     composite_list,
+    htmt_cutoff = 0.90,
     digits = 3,
     return_metrics = FALSE,
     file = NULL,
@@ -114,7 +124,7 @@ average_score <- function(
           calc_single_indicator(
             data = data,
             var = var,
-            name = NULL,
+            name = name,
             digits = digits,
             return_metrics = return_metrics
           )
@@ -188,7 +198,7 @@ average_score <- function(
           calc_single_indicator(
             data = data,
             var = var,
-            name = NULL,
+            name = name,
             digits = digits,
             return_metrics = return_metrics
           )
@@ -288,27 +298,16 @@ average_score <- function(
     
     # Combine into returnable list
     
-    composite_sheets <- list(
+    composite_sheets <- finalize_metric_output(
       data = data,
       metrics = metrics,
-      validity = validity
+      validity = validity,
+      composite_list = composite_list,
+      digits = digits,
+      file = file,
+      name = name,
+      htmt_cutoff = htmt_cutoff
     )
-    
-    
-    
-    # -- IF FILE PATH IS SPECIFIED FOR EXPORTING RESULTS -- #
-    
-    if(!is.null(file)){
-      
-      export_metrics(
-        metrics = composite_sheets,
-        digits = digits,
-        name = name,
-        file = file
-      )
-      
-    }
-    
     
     # -- RETURN -- #
     return(composite_sheets)

@@ -1,5 +1,3 @@
-context("input_validation")
-
 test_that("median composite stops on non-numeric inputs", {
   df <- data.frame(x1 = letters[1:5], x2 = 1:5, x3 = 1:5, stringsAsFactors = FALSE)
   cl <- composite_list(y = c("x1", "x2", "x3"))

@@ -31,7 +31,8 @@ test_that("PCA discriminant composite returns metrics when requested", {
     weight = "pca",
     return_metrics = TRUE
   )
-  expect_named(result, c("data", "metrics", "validity"))
+  expect_named(result, c("data", "metrics", "validity",
+                         "discriminant_summary", "fornell_larcker", "htmt"))
   expect_true("y" %in% names(result$data))
 })
 

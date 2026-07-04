@@ -217,10 +217,12 @@ calc_discriminant_composite <- function(
       
       if (length(non_zero_vars) >= 2) {
         model <- tryCatch({
-          psych::principal(
-            df[, non_zero_vars, drop = FALSE],
-            nfactors = 1,
-            rotate = "none"
+          suppressWarnings(
+            psych::principal(
+              df[, non_zero_vars, drop = FALSE],
+              nfactors = 1,
+              rotate = "none"
+            )
           )
         }, error = function(e) NULL)
         
@@ -234,10 +236,12 @@ calc_discriminant_composite <- function(
       }
       discrimination[zero_var] <- 0
     } else {
-      model <- psych::principal(
-        df,
-        nfactors = 1,
-        rotate = "none"
+      model <- suppressWarnings(
+        psych::principal(
+          df,
+          nfactors = 1,
+          rotate = "none"
+        )
       )
 
       discrimination <- setNames(

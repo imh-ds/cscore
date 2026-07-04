@@ -86,8 +86,9 @@ calc_cov_composite <- function(
   if(weight %in% c("correlation", "regression")){
     
     # Calculate correlation matrix
-    cor_matrix <- stats::cor(df,
-                             use = 'pairwise.complete.obs')
+    cor_matrix <- suppressWarnings(
+      stats::cor(df, use = "pairwise.complete.obs")
+    )
     
     # Remove correlation matrix diagonal
     diag(cor_matrix) <- NA
@@ -151,10 +152,12 @@ calc_cov_composite <- function(
         
         if (length(non_zero_vars) >= 2) {
           pca_model <- tryCatch({
-            psych::principal(
-              df[, non_zero_vars, drop = FALSE],
-              nfactors = 1,
-              rotate = "none"
+            suppressWarnings(
+              psych::principal(
+                df[, non_zero_vars, drop = FALSE],
+                nfactors = 1,
+                rotate = "none"
+              )
             )
           }, error = function(e) NULL)
           
@@ -168,10 +171,12 @@ calc_cov_composite <- function(
         }
         reg_weights[zero_var] <- 1
       } else {
-        pca_model <- psych::principal(
-          df,
-          nfactors = 1,
-          rotate = "none"
+        pca_model <- suppressWarnings(
+          psych::principal(
+            df,
+            nfactors = 1,
+            rotate = "none"
+          )
         )
 
         reg_weights <- setNames(

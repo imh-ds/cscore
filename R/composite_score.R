@@ -71,6 +71,9 @@
 #'   and B.
 #' @param threshold Integer. Specifies the maximum number of unique values to
 #'   consider the input as discrete. Defaults to 10.
+#' @param htmt_cutoff Numeric threshold used to classify HTMT-based
+#'   discriminant-validity PASS/FAIL results when \code{return_metrics =
+#'   TRUE}. Default is \code{0.90}.
 #' @param pred_type Prediction method schema for predictive weighting. Schemas
 #'   include \code{c("glm", "rf")}. \code{"glm"} runs \code{glmnet::cv.glmnet()}
 #'   for regularization linear regression. \code{"rf"} runs
@@ -236,6 +239,7 @@ composite_score <- function(
     entropy = c("emp", "mm", "shrink", "sg"),
     nmi_method = c("geometric", "average"),
     threshold = 10,
+    htmt_cutoff = 0.90,
     pred_type = c("glm", "rf"),
     item_type = NULL,
     pmm_k = 5,
@@ -340,6 +344,7 @@ composite_score <- function(
     cs <- average_score(
       data = data,
       composite_list = composite_list,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       return_metrics = return_metrics,
       file = file,
@@ -357,6 +362,7 @@ composite_score <- function(
       data = data,
       composite_list = composite_list,
       weight = weight,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       return_metrics = return_metrics,
       file = file,
@@ -374,6 +380,7 @@ composite_score <- function(
       data = data,
       composite_list = composite_list,
       weight = weight,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       return_metrics = return_metrics,
       file = file,
@@ -394,6 +401,7 @@ composite_score <- function(
       weight = weight,
       decay_rate = decay_rate,
       sigma = sigma,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       return_metrics = return_metrics,
       file = file,
@@ -413,6 +421,7 @@ composite_score <- function(
       entropy = entropy,
       nmi_method = nmi_method,
       threshold = threshold,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       return_metrics = return_metrics,
       file = file,
@@ -439,6 +448,7 @@ composite_score <- function(
       nfolds = nfolds,
       maxiter = maxiter,
       seed = seed,
+      htmt_cutoff = htmt_cutoff,
       digits = digits,
       alpha = alpha,
       on_scale_mismatch = on_scale_mismatch,

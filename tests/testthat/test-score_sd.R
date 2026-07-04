@@ -63,5 +63,6 @@ test_that("sd composite returns metrics when requested", {
     weight = "sd_upweight",
     return_metrics = TRUE
   )
-  expect_named(result, c("data", "metrics", "validity"))
+  expect_named(result, c("data", "metrics", "validity",
+                         "discriminant_summary", "fornell_larcker", "htmt"))
 })

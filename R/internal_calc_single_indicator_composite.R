@@ -32,7 +32,7 @@ calc_single_indicator <- function(
     
     rounding <- paste0("%.", digits, "f")
     
-    range <- paste0(
+    metric_range <- paste0(
       "[",
       sprintf(rounding, 1),
       ", ",
@@ -49,8 +49,8 @@ calc_single_indicator <- function(
       alpha = 1,
       rhoc = 1,
       ave = 1,
-      loading_range = range,
-      weight_range = range
+      loading_range = metric_range,
+      weight_range = metric_range
     )
     
     # Compile weights and loadings

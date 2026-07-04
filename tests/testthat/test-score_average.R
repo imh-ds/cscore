@@ -21,7 +21,8 @@ test_that("average composite returns metrics when requested", {
     composite_list = composite_list_simple,
     return_metrics = TRUE
   )
-  expect_named(result, c("data", "metrics", "validity"))
+  expect_named(result, c("data", "metrics", "validity",
+                         "discriminant_summary", "fornell_larcker", "htmt"))
   expect_true("y" %in% names(result$data))
   expect_true("composite" %in% names(result$metrics))
   expect_true("rhoc" %in% names(result$validity))

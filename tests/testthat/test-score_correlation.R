@@ -67,6 +67,7 @@ test_that("correlation composite returns metrics when requested", {
     weight = "correlation",
     return_metrics = TRUE
   )
-  expect_named(result, c("data", "metrics", "validity"))
+  expect_named(result, c("data", "metrics", "validity",
+                         "discriminant_summary", "fornell_larcker", "htmt"))
   expect_true(all(c("alpha", "rhoc", "ave") %in% names(result$validity)))
 })

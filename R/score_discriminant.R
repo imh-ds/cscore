@@ -284,6 +284,9 @@
 #'   Default is \code{"gaussian"}.
 #' @param verbose Logical; if \code{1}, print progress messages and intermediate
 #'   output. Defaults to \code{0}.
+#' @param htmt_cutoff Numeric threshold used for HTMT PASS/FAIL classification
+#'   in the discriminant-validity summary returned when
+#'   \code{return_metrics = TRUE}. Default is \code{0.90}.
 #' @param seed An integer seed for reproducibility. Defaults to \code{NULL},
 #'   where no seed is set.
 #' @param on_scale_mismatch Character string controlling behavior when indicators
@@ -313,6 +316,12 @@
 #'  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
 #'  \item \strong{Validity}: A matrix of composite reliability and validity
 #'  metrics.
+#'  \item \strong{Discriminant Summary}: A matrix of reporting-set
+#'  discriminant-validity statistics and PASS/FAIL results.
+#'  \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+#'  \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+#'  correlations.
+#'  \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 #' }
 #'
 #' @examples
@@ -361,6 +370,7 @@ discriminant_score <- function(
     pmm_k = 5,
     maxiter = 10,
     verbose = 0,
+    htmt_cutoff = 0.90,
     digits = 3,
     alpha = 0.5,
     nfolds = 10,
@@ -462,6 +472,7 @@ discriminant_score <- function(
         
         # Convert list to numeric vector
         counts_vec <- unlist(unique_counts)
+        non_constant_counts <- counts_vec[counts_vec > 1]
         
         # Check if variable may be continuous
         continuous <- any(counts_vec > 15)
@@ -478,7 +489,7 @@ discriminant_score <- function(
         } else {
           
           # Check for scale consistency
-          consistency <- length(unique(counts_vec)) == 1
+          consistency <- length(unique(non_constant_counts)) <= 1
           
           # If there is no mismatch
           if (isTRUE(consistency)) {
@@ -987,27 +998,16 @@ discriminant_score <- function(
     
     # Combine into returnable list
     
-    composite_sheets <- list(
+    composite_sheets <- finalize_metric_output(
       data = data,
       metrics = metrics,
-      validity = validity
+      validity = validity,
+      composite_list = composite_list,
+      digits = digits,
+      file = file,
+      name = name,
+      htmt_cutoff = htmt_cutoff
     )
-    
-    
-    
-    # -- IF FILE PATH IS SPECIFIED FOR EXPORTING RESULTS -- #
-    
-    if(!is.null(file)){
-      
-      export_metrics(
-        metrics = composite_sheets,
-        digits = digits,
-        name = name,
-        file = file
-      )
-      
-    }
-    
     
     # -- RETURN -- #
     return(composite_sheets)

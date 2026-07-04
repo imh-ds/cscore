@@ -23,7 +23,8 @@ test_that("median composite returns metrics when requested", {
     composite_list = composite_list_simple,
     return_metrics = TRUE
   )
-  expect_named(result, c("data", "metrics", "validity"))
+  expect_named(result, c("data", "metrics", "validity",
+                         "discriminant_summary", "fornell_larcker", "htmt"))
 })
 
 test_that("median_decay returns finite scores on a simple dataset", {
