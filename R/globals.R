@@ -1,9 +1,24 @@
 # Silence R CMD check notes for tidy-eval column references used in dplyr verbs.
 utils::globalVariables(c(
+  ".",
+  "Composite",
+  "alpha",
+  "ave",
+  "composite",
   "discriminant_validity",
+  "from",
   "fornell_larcker",
   "htmt",
+  "indicator",
+  "loading_range",
+  "loadings",
   "max_htmt",
   "max_interconstruct_corr",
-  "sqrt_ave"
+  "median",
+  "rhoc",
+  "sqrt_ave",
+  "to",
+  "variable",
+  "weight_range",
+  "weights"
 ))
