@@ -14,12 +14,14 @@ discriminant_score(
   pmm_k = 5,
   maxiter = 10,
   verbose = 0,
+  htmt_cutoff = 0.9,
   digits = 3,
   alpha = 0.5,
   nfolds = 10,
   ntrees = 100,
   importance = c("permutation", "impurity"),
   family = c("gaussian", "binomial", "multinomial", "poisson"),
+  on_scale_mismatch = c("warn", "error"),
   return_metrics = FALSE,
   seed = NULL,
   file = NULL,
@@ -65,6 +67,10 @@ the specified limit is reached.}
 \item{verbose}{Logical; if \code{1}, print progress messages and intermediate
 output. Defaults to \code{0}.}
 
+\item{htmt_cutoff}{Numeric threshold used for HTMT PASS/FAIL classification
+in the discriminant-validity summary returned when
+\code{return_metrics = TRUE}. Default is \code{0.90}.}
+
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3. This argument is only relevant if \code{return_metrics = TRUE}.}
 
@@ -104,6 +110,13 @@ penalized model fitting via \code{cv.glmnet}. The supported options are:
   \item \code{"poisson"}: for modeling count data under a Poisson distribution with a log link. The response should be a non-negative count-valued numeric vector.
 }
 Default is \code{"gaussian"}.}
+
+\item{on_scale_mismatch}{Character string controlling behavior when indicators
+within a composite appear to be on different response scales.
+\itemize{
+  \item \code{"warn"} (default): issue a \code{warning()} and continue.
+  \item \code{"error"}: call \code{stop()} to halt execution.
+}}
 
 \item{return_metrics}{Logic to determine whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with

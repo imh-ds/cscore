@@ -8,6 +8,7 @@ correlation_score(
   data = .,
   composite_list,
   weight = c("correlation", "regression"),
+  htmt_cutoff = 0.9,
   digits = 3,
   return_metrics = FALSE,
   file = NULL,
@@ -25,6 +26,10 @@ comprising said composite variable.}
 
 \item{weight}{Required weighting schema. Schemas include
 \code{c("correlation", "regression")}. Default is \code{"correlation"}.}
+
+\item{htmt_cutoff}{Numeric threshold used for HTMT PASS/FAIL classification
+in the discriminant-validity summary returned when
+\code{return_metrics = TRUE}. Default is \code{0.90}.}
 
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3. This argument is only relevant if \code{return_metrics = TRUE}.}

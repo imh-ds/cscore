@@ -5,3 +5,6 @@ example*
 manuscript*
 .github*
 .Rhistory
+^\.claude$
+^CITATION$
+^composite\.xlsx$

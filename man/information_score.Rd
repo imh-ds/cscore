@@ -10,6 +10,7 @@ information_score(
   entropy = c("emp", "mm", "shrink", "sg"),
   nmi_method = c("geometric", "average"),
   threshold = 10,
+  htmt_cutoff = 0.9,
   digits = 3,
   return_metrics = FALSE,
   file = NULL,
@@ -44,6 +45,10 @@ entropies of variables A and B.}
 
 \item{threshold}{An integer specifying the maximum number of unique values to
 consider the input as discrete. Defaults to 10.}
+
+\item{htmt_cutoff}{Numeric threshold used for HTMT PASS/FAIL classification
+in the discriminant-validity summary returned when
+\code{return_metrics = TRUE}. Default is \code{0.90}.}
 
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3. This argument is only relevant if \code{return_metrics = TRUE}.}

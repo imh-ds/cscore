@@ -10,6 +10,7 @@ median_score(
   weight = c("median", "median_decay", "median_gauss"),
   decay_rate = 0.5,
   sigma = 0.5,
+  htmt_cutoff = 0.9,
   digits = 3,
   return_metrics = FALSE,
   file = NULL,
@@ -35,6 +36,10 @@ is set to 0.5.}
 \item{sigma}{A numeric value reflecting the sigma value for the Gaussian
 function in the distance-to-median weighting schema. The default value is
 set to 0.5.}
+
+\item{htmt_cutoff}{Numeric threshold used for HTMT PASS/FAIL classification
+in the discriminant-validity summary returned when
+\code{return_metrics = TRUE}. Default is \code{0.90}.}
 
 \item{digits}{The decimal places for the metrics to be rounded to. Default is
 3. This argument is only relevant if \code{return_metrics = TRUE}.}

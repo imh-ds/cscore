@@ -17,6 +17,7 @@ composite_score(
   entropy = c("emp", "mm", "shrink", "sg"),
   nmi_method = c("geometric", "average"),
   threshold = 10,
+  htmt_cutoff = 0.9,
   pred_type = c("glm", "rf"),
   item_type = NULL,
   pmm_k = 5,
@@ -27,6 +28,8 @@ composite_score(
   ntrees = 100,
   importance = c("permutation", "impurity"),
   family = c("gaussian", "binomial", "multinomial", "poisson"),
+  on_scale_mismatch = c("warn", "error"),
+  impute = FALSE,
   return_metrics = FALSE,
   digits = 3,
   file = NULL,
@@ -45,6 +48,7 @@ cscore(
   entropy = c("emp", "mm", "shrink", "sg"),
   nmi_method = c("geometric", "average"),
   threshold = 10,
+  htmt_cutoff = 0.9,
   pred_type = c("glm", "rf"),
   item_type = NULL,
   pmm_k = 5,
@@ -55,6 +59,8 @@ cscore(
   ntrees = 100,
   importance = c("permutation", "impurity"),
   family = c("gaussian", "binomial", "multinomial", "poisson"),
+  on_scale_mismatch = c("warn", "error"),
+  impute = FALSE,
   return_metrics = FALSE,
   digits = 3,
   file = NULL,
@@ -73,6 +79,7 @@ cs(
   entropy = c("emp", "mm", "shrink", "sg"),
   nmi_method = c("geometric", "average"),
   threshold = 10,
+  htmt_cutoff = 0.9,
   pred_type = c("glm", "rf"),
   item_type = NULL,
   pmm_k = 5,
@@ -83,6 +90,8 @@ cs(
   ntrees = 100,
   importance = c("permutation", "impurity"),
   family = c("gaussian", "binomial", "multinomial", "poisson"),
+  on_scale_mismatch = c("warn", "error"),
+  impute = FALSE,
   return_metrics = FALSE,
   digits = 3,
   file = NULL,
@@ -159,6 +168,10 @@ and B.}
 \item{threshold}{Integer. Specifies the maximum number of unique values to
 consider the input as discrete. Defaults to 10.}
 
+\item{htmt_cutoff}{Numeric threshold used to classify HTMT-based
+discriminant-validity PASS/FAIL results when \code{return_metrics =
+TRUE}. Default is \code{0.90}.}
+
 \item{pred_type}{Prediction method schema for predictive weighting. Schemas
 include \code{c("glm", "rf")}. \code{"glm"} runs \code{glmnet::cv.glmnet()}
 for regularization linear regression. \code{"rf"} runs
@@ -217,6 +230,18 @@ penalized model fitting via \code{cv.glmnet}. The supported options are:
   \item \code{"poisson"}: for modeling count data under a Poisson distribution with a log link. The response should be a non-negative count-valued numeric vector.
 }
 Default is \code{"gaussian"}.}
+
+\item{on_scale_mismatch}{Character string controlling behavior when indicators
+within a composite appear to be on different response scales (only relevant
+for discriminant-family weights).
+\itemize{
+  \item \code{"warn"} (default): issue a \code{warning()} and continue.
+  \item \code{"error"}: call \code{stop()} to halt execution.
+}}
+
+\item{impute}{Logical. If \code{TRUE}, missing values in the indicator
+columns are imputed via Random Forest (\code{missRanger::missRanger()})
+before composite scores are computed. Defaults to \code{FALSE}.}
 
 \item{return_metrics}{Logic. Determines whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with
