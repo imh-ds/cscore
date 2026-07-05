@@ -14,7 +14,8 @@ typically violated in practice. `cscore` allows researchers to:
 -   Weigh indicators based on how well they represent their latent
     construct
 
--   Compute reliability and validity metrics
+-   Compute reliability and validity metrics, including discriminant
+    validity summaries
 
 -   Integrate with DAG-based models to increase predictive power
 
@@ -94,32 +95,85 @@ composite_list <- composite_list(
   # Higher-order composites
   grit                  = c("consistency_interest", "perseverance_effort")
  )
- 
+
 # Correlation-weighted composite
 grit |>
   composite_score(
-    composite_list = composite_list, 
+    composite_list = composite_list,
     weight = "correlation"
   )
 ```
 
 ### Returning Reliability and Validity Metrics
 
-When `return_metrics = TRUE`, the following psychometric indices are
-returned:
+When `return_metrics = TRUE`, `cscore` returns a structured list with:
 
--   **Indicator loadings** (correlation with composite)
+-   `data`: the original dataframe with the computed composite-score
+    columns appended
 
--   **Cronbach’s alpha** (α)
+-   `metrics`: an indicator-level table containing the final
+    **loadings** and **weights** for each composite
 
--   **Composite reliability** (ρₚ or ω)
+-   `validity`: a construct-level table containing **Cronbach's alpha
+    (alpha)**, **composite reliability (rhoC)**, **average variance
+    extracted (AVE)**, **sqrt(AVE)**, **maximum inter-construct
+    correlation**, **maximum HTMT**, and construct-level **PASS/FAIL**
+    summaries for:
 
--   **Average variance extracted (AVE)\`** for discriminant validity
+    -   **FL**: Fornell-Larcker criterion
+
+    -   **HTMT**: heterotrait-monotrait ratio
+
+    -   **DV**: overall discriminant validity
+
+-   `fornell_larcker`: a square matrix with **sqrt(AVE)** on the
+    diagonal and absolute inter-construct correlations on the
+    off-diagonals
+
+-   `htmt`: a square matrix of pairwise **HTMT** ratios
+
+These outputs let you inspect both the indicator-level measurement model
+(loadings and weights) and the construct-level reliability,
+convergent-validity, and discriminant-validity diagnostics.
 
 ``` r
-grit |> 
-  composite_score(composite_list, weight = "correlation", return_metrics = TRUE)
+metric_results <- grit |>
+  composite_score(
+    composite_list = composite_list,
+    weight = "correlation",
+    return_metrics = TRUE
+  )
 ```
+
+### Exporting a Metrics Workbook
+
+If you also supply a file path while `return_metrics = TRUE`, `cscore`
+will export a formatted Excel workbook through `export_metrics()`.
+
+``` r
+grit |>
+  composite_score(
+    composite_list = composite_list,
+    weight = "correlation",
+    return_metrics = TRUE,
+    file = "composite_metrics.xlsx"
+  )
+```
+
+The exported workbook includes:
+
+-   **Metrics**: indicator-level loadings and weights
+
+-   **Validity**: reliability, AVE, loading range, weight range, and
+    discriminant-validity PASS/FAIL summaries
+
+-   **Fornell-Larcker**: the Fornell-Larcker matrix with `sqrt(AVE)` on
+    the diagonal
+
+-   **HTMT**: the pairwise HTMT matrix
+
+Together, these sheets provide a compact reporting package for
+measurement-model review and appendix-style psychometric reporting.
 
 ### Outcome-Informed Weighting
 
@@ -151,7 +205,7 @@ composite_model <- composite_model(
 # Correlation-weighted composite
 grit |>
   composite_score(
-    composite_list = composite_list, 
+    composite_list = composite_list,
     composite_model = composite_model,
     weight = "irt",
     pred_type = "glm"
