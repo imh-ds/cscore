@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+archive*
 notebook*
 example*
 manuscript*

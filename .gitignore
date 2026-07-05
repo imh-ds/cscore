@@ -50,6 +50,10 @@ rsconnect/
 
 # WIP folder
 /notebook/
+/archive/
+/archive/legacy-repo-files/.Rhistory
+/archive/legacy-repo-files/*.tar.gz
+/archive/legacy-repo-files/*.Rcheck/
 
 # AI Agent folders
 .claude/
