@@ -1,3 +1,24 @@
+# cscore 1.0.5
+
+## Maintenance
+
+- The `data` argument of the scoring functions no longer defaults to the
+  magrittr dot (`data = .`). Calling a scoring function without data now raises
+  a clear "argument \"data\" is missing" error instead of a cryptic
+  `object '.' not found`. Piping is unaffected: `data |> composite_score(...)`
+  and `data %>% composite_score(...)` both still supply `data` positionally.
+- Examples now write their optional Excel workbook to `tempdir()` instead of the
+  working directory, per CRAN policy. The `discriminant_score()` and
+  `information_score()` examples (which rely on suggested packages and are
+  comparatively slow) are wrapped in `\donttest{}`.
+- Removed the unused internal `check_dag()` helper (cycle detection is performed
+  by `topo_sort_df()`).
+- Anchored the `.Rbuildignore` patterns (e.g., `^archive$` instead of
+  `archive*`) so they match only the intended top-level paths.
+- Added a dedicated test file for `information_score()` (scores, metrics
+  structure, all entropy estimators and NMI methods). See
+  `changelog/2026-07-17-maintenance.md`.
+
 # cscore 1.0.4
 
 ## Bug fixes

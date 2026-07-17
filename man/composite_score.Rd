@@ -7,7 +7,7 @@
 \title{Calculate Composite Scores}
 \usage{
 composite_score(
-  data = .,
+  data,
   composite_list,
   composite_model = NULL,
   weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",
@@ -38,7 +38,7 @@ composite_score(
 )
 
 cscore(
-  data = .,
+  data,
   composite_list,
   composite_model = NULL,
   weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",
@@ -69,7 +69,7 @@ cscore(
 )
 
 cs(
-  data = .,
+  data,
   composite_list,
   composite_model = NULL,
   weight = c("correlation", "regression", "average", "sd_upweight", "sd_downweight",

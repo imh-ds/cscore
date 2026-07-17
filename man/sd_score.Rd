@@ -5,7 +5,7 @@
 \title{Calculate Standard Deviation Composite Scores}
 \usage{
 sd_score(
-  data = .,
+  data,
   composite_list,
   weight = c("sd_upweight", "sd_downweight"),
   htmt_cutoff = 0.9,
@@ -214,13 +214,15 @@ composite_list <- composite_list(
 sd_score(data = grit,
          composite_list = composite_list)
 
-# Calculate correlation-weighted composite scores, reliability, & validity
+# Calculate SD-weighted composite scores, reliability, & validity
+# (optionally write a formatted Excel workbook to a temporary file)
+out <- file.path(tempdir(), "composite.xlsx")
 sd_score(data = grit,
          composite_list = composite_list,
          digits = 3,
          return_metrics = TRUE,
-         file = "composite.xlsx")
+         file = out)
 
-unlink("composite.xlsx")
+unlink(out)
 
 }

@@ -231,7 +231,7 @@
 #'
 #' @export
 composite_score <- function(
-    data = .,
+    data,
     composite_list,
     composite_model = NULL,
     weight = c("correlation", "regression", "average",

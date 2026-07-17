@@ -5,7 +5,7 @@
 \title{Calculate Information-Weighted Composite Scores}
 \usage{
 information_score(
-  data = .,
+  data,
   composite_list,
   entropy = c("emp", "mm", "shrink", "sg"),
   nmi_method = c("geometric", "average"),
@@ -276,17 +276,23 @@ composite_list <- composite_list(
 
  )
 
-# Calculate correlation-weighted composite scores
+# Mutual-information scoring requires the suggested 'infotheo' package and
+# can be slow, so the calls are wrapped in \donttest{}.
+\donttest{
+# Calculate mutual-information-weighted composite scores
 information_score(data = grit,
                   composite_list = composite_list)
 
-# Calculate correlation-weighted composite scores, reliability, & validity
+# Calculate mutual-information composite scores, reliability, & validity
+# (optionally write a formatted Excel workbook to a temporary file)
+out <- file.path(tempdir(), "composite.xlsx")
 information_score(data = grit,
                   composite_list = composite_list,
                   digits = 3,
                   return_metrics = TRUE,
-                  file = "composite.xlsx")
+                  file = out)
 
-unlink("composite.xlsx")
+unlink(out)
+}
 
 }

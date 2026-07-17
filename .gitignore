@@ -54,7 +54,9 @@ rsconnect/
 /archive/legacy-repo-files/.Rhistory
 /archive/legacy-repo-files/*.tar.gz
 /archive/legacy-repo-files/*.Rcheck/
-/changelog/
+# NOTE: /changelog/ is intentionally tracked in git (developer-facing change
+# notes, e.g. for porting fixes to cscorepy) but excluded from the built package
+# tarball via .Rbuildignore. Do not re-add it here.
 
 # AI Agent folders
 .claude/

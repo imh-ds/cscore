@@ -5,7 +5,7 @@
 \title{Calculate Discriminant-Weighted Composite Scores}
 \usage{
 discriminant_score(
-  data = .,
+  data,
   composite_list,
   composite_model = NULL,
   weight = c("irt", "pca", "glm"),
@@ -408,18 +408,25 @@ composite_list <- composite_list(
 
  )
 
+# Discriminant scoring imputes internally and fits latent-variable models
+# (suggested packages 'mirt'/'glmnet'/'missRanger'); it can be slow, so the
+# calls are wrapped in \donttest{}.
+\donttest{
 # Calculate discriminant-weighted composite scores
 discriminant_score(data = grit,
                    composite_list = composite_list)
 
 # Calculate discriminant-weighted composite scores, reliability, & validity
+# (optionally write a formatted Excel workbook to a temporary file)
+out <- file.path(tempdir(), "composite.xlsx")
 discriminant_score(data = grit,
                    composite_list = composite_list,
                    digits = 3,
                    return_metrics = TRUE,
-                   file = "composite.xlsx")
+                   file = out)
 
-unlink("composite.xlsx")
+unlink(out)
+}
 
 
 }

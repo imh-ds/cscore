@@ -186,17 +186,19 @@
 #'                   composite_list = composite_list)
 #'
 #' # Calculate correlation-weighted composite scores, reliability, & validity
+#' # (optionally write a formatted Excel workbook to a temporary file)
+#' out <- file.path(tempdir(), "composite.xlsx")
 #' correlation_score(data = grit,
 #'                   composite_list = composite_list,
 #'                   digits = 3,
 #'                   return_metrics = TRUE,
-#'                   file = "composite.xlsx")
+#'                   file = out)
 #'
-#' unlink("composite.xlsx")
+#' unlink(out)
 #'
 #' @export
 correlation_score <- function(
-    data = .,
+    data,
     composite_list,
     weight = c("correlation", "regression"),
     htmt_cutoff = 0.90,

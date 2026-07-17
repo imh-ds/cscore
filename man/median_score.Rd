@@ -5,7 +5,7 @@
 \title{Calculate Median Composite Scores & Metrics}
 \usage{
 median_score(
-  data = .,
+  data,
   composite_list,
   weight = c("median", "median_decay", "median_gauss"),
   decay_rate = 0.5,
@@ -269,12 +269,14 @@ median_score(data = grit,
              composite_list = composite_list)
 
 # Calculate median composite scores, reliability, & validity
+# (optionally write a formatted Excel workbook to a temporary file)
+out <- file.path(tempdir(), "composite.xlsx")
 median_score(data = grit,
              composite_list = composite_list,
              digits = 3,
              return_metrics = TRUE,
-             file = "composite.xlsx")
+             file = out)
 
-unlink("composite.xlsx")
+unlink(out)
 
 }
