@@ -5,6 +5,6 @@ bibentry(
   title    = "{cscore}: Weighted Composite Scoring for Scales",
   author   = person("Hohjin", "Im"),
   year     = "2024",
-  note     = "R package version 1.0.1",
+  note     = "R package version 1.0.2",
   url      = "https://github.com/imh-ds/cscore"
 )

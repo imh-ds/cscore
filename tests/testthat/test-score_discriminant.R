@@ -59,3 +59,43 @@ test_that("discriminant family errors informatively when mirt is absent", {
     regexp = "mirt"
   )
 })
+
+test_that("outcome-informed weighting warns about circularity", {
+  skip_if_not_installed("glmnet")
+
+  set.seed(7)
+  nn <- 80
+  f1 <- rnorm(nn); f2 <- 0.5 * f1 + rnorm(nn)
+  mk <- function(l) round(pmin(pmax(3 + l + rnorm(nn, 0, 0.8), 1), 5))
+  mdf <- data.frame(
+    a1 = mk(f1), a2 = mk(f1), a3 = mk(f1),
+    b1 = mk(f2), b2 = mk(f2), b3 = mk(f2),
+    c1 = mk(f2), c2 = mk(f2), c3 = mk(f2)
+  )
+  cl <- composite_list(
+    A = c("a1", "a2", "a3"),
+    B = c("b1", "b2", "b3"),
+    C = c("c1", "c2", "c3")
+  )
+  cm <- composite_model(link(from = c("A", "B"), to = "C"))
+
+  # A model that triggers predictive reweighting must warn about circularity.
+  expect_warning(
+    suppressMessages(
+      discriminant_score(mdf, cl, composite_model = cm, weight = "pca", seed = 1)
+    ),
+    regexp = "circular"
+  )
+})
+
+test_that("no circularity warning without a composite_model", {
+  expect_no_warning(
+    suppressMessages(
+      discriminant_score(
+        data = disc_df,
+        composite_list = composite_list_simple,
+        weight = "pca"
+      )
+    )
+  )
+})

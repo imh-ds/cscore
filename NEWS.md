@@ -1,3 +1,26 @@
+# cscore 1.0.2
+
+## Bug fixes
+
+- Reported indicator loadings are now standardized loadings from a single
+  common-factor (minres one-factor) solution, replacing the corrected
+  item-total (item-rest) correlations used previously. Item-rest correlations
+  are attenuated relative to factor loadings, which systematically **deflated**
+  `ave` and `rhoc` and biased the Fornell-Larcker verdicts toward FAIL. With
+  factor loadings, `rhoc` reproduces McDonald's omega for unit weights and AVE
+  recovers the true value. Composite scores are unchanged. See
+  `changelog/2026-07-17-factor-analytic-loadings.md`.
+
+## New features
+
+- Outcome-informed (predictive) weighting now emits a circularity `warning()`.
+  When a `composite_model` is supplied to the discriminant family, predictor
+  composites are reweighted to predict their downstream outcomes; testing those
+  same predictor-outcome paths on the same data is circular and optimistically
+  biased. The warning names the affected composites and recommends validating
+  on held-out or independent data. See
+  `changelog/2026-07-17-outcome-weighting-circularity.md`.
+
 # cscore 1.0.1
 
 ## Bug fixes
@@ -8,14 +31,6 @@
 - Fixed circular weighting in the `"pca"`/`"glm"` discriminant scheme: replaced
   elastic-net re-regression of PC1 scores onto the same items with direct PC1
   loadings (`psych::principal()$loadings`).
-- Reported indicator loadings are now standardized loadings from a single
-  common-factor (minres one-factor) solution, replacing the corrected
-  item-total (item-rest) correlations used previously. Item-rest correlations
-  are attenuated relative to factor loadings, which systematically **deflated**
-  `ave` and `rhoc` and biased the Fornell-Larcker verdicts toward FAIL. With
-  factor loadings, `rhoc` reproduces McDonald's omega for unit weights and AVE
-  recovers the true value. Composite scores are unchanged. See
-  `changelog/2026-07-17-factor-analytic-loadings.md`.
 - Fixed the missing-data path in `"median_decay"` / `"median_gauss"`: missing
   items' weights are now zeroed out before row-wise renormalization, matching
   the behaviour of `weighted_row_mean()`.

@@ -151,6 +151,17 @@
 #' vector is normalized with \code{safe_normalize()} unless it is effectively
 #' zero, in which case a zero vector is used.
 #'
+#' \strong{Circularity caution.} Predictive reweighting uses each composite's
+#' downstream outcome(s) to construct that composite's weights, so the resulting
+#' predictor is not independent of the outcome. Estimating and testing the same
+#' predictor-outcome association(s) on the same data is therefore circular and
+#' yields optimistically biased results (inflated effect sizes, anticonservative
+#' inference). Whenever outcome-informed weighting is applied, the function
+#' issues a \code{warning()} naming the affected composites. To draw valid
+#' inferences about those paths, estimate the weights and test the paths on
+#' \emph{different} data, e.g., a train/test split or a separate confirmatory
+#' sample.
+#'
 #' \strong{5. Final weight aggregation.}
 #'
 #' Let \eqn{\mathbf{d}} denote the normalized latent discrimination vector and
@@ -227,7 +238,11 @@
 #'   comprising said composite variable.
 #' @param composite_model An optional \code{composite_model} object. Combines
 #'   one or more sets of `link` paths specifying directed associations between
-#'   variables. The model is assumed to be a directed acyclic graph.
+#'   variables. The model is assumed to be a directed acyclic graph. Supplying a
+#'   model triggers outcome-informed (predictive) reweighting of the predictor
+#'   composites, which introduces circularity: see the \strong{Circularity
+#'   caution} in Details. Weights tuned to predict an outcome must not be used to
+#'   test that same predictor-outcome path on the same data.
 #' @param weight Required weighting schema. Schemas include \code{c("irt",
 #'   "pca", "glm")}. \code{c("pca", "glm")} run the same weighting schema.
 #'   Default is \code{"irt"}.
@@ -641,11 +656,31 @@ discriminant_score <- function(
     
     # Remove duplicates
     exp_pred_vars <- unique(exp_pred_vars)
-    
+
+    # Circularity warning. The composites in `exp_pred_vars` are about to be
+    # rescored with outcome-informed (predictive) weights, i.e., their indicator
+    # weights are tuned to predict their model-implied downstream outcome(s).
+    # Because the outcome is used to build the predictor, the two are no longer
+    # independent, and estimating/testing those same predictor -> outcome paths
+    # on this same data set is circular and optimistically biased. Warn once.
+    if (length(exp_pred_vars) > 0) {
+      warning(
+        "Outcome-informed weighting will be applied to: ",
+        paste(exp_pred_vars, collapse = ", "),
+        ". These composites' weights are tuned to predict their downstream ",
+        "outcome(s), so testing the same predictor-outcome path(s) on this same ",
+        "data is circular and will be optimistically biased (inflated effect ",
+        "sizes, anticonservative inference). Validate those paths on held-out or ",
+        "independent data (e.g., a train/test split or a separate confirmatory ",
+        "sample).",
+        call. = FALSE
+      )
+    }
+
   }
-  
-  
-  
+
+
+
   # -- IF ONLY CALCULATING COMPOSITE -- #
   if(return_metrics == FALSE){
     

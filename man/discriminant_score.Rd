@@ -39,7 +39,11 @@ comprising said composite variable.}
 
 \item{composite_model}{An optional \code{composite_model} object. Combines
 one or more sets of `link` paths specifying directed associations between
-variables. The model is assumed to be a directed acyclic graph.}
+variables. The model is assumed to be a directed acyclic graph. Supplying a
+model triggers outcome-informed (predictive) reweighting of the predictor
+composites, which introduces circularity: see the \strong{Circularity
+caution} in Details. Weights tuned to predict an outcome must not be used to
+test that same predictor-outcome path on the same data.}
 
 \item{weight}{Required weighting schema. Schemas include \code{c("irt",
 "pca", "glm")}. \code{c("pca", "glm")} run the same weighting schema.
@@ -303,6 +307,17 @@ across folds for each indicator, re-ordered to match the indicator columns,
 and then averaged across outcomes. As in the GLM case, the final predictive
 vector is normalized with \code{safe_normalize()} unless it is effectively
 zero, in which case a zero vector is used.
+
+\strong{Circularity caution.} Predictive reweighting uses each composite's
+downstream outcome(s) to construct that composite's weights, so the resulting
+predictor is not independent of the outcome. Estimating and testing the same
+predictor-outcome association(s) on the same data is therefore circular and
+yields optimistically biased results (inflated effect sizes, anticonservative
+inference). Whenever outcome-informed weighting is applied, the function
+issues a \code{warning()} naming the affected composites. To draw valid
+inferences about those paths, estimate the weights and test the paths on
+\emph{different} data, e.g., a train/test split or a separate confirmatory
+sample.
 
 \strong{5. Final weight aggregation.}
 

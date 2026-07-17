@@ -110,7 +110,12 @@ comprising said composite variable.}
 
 \item{composite_model}{An optional \code{composite_model} object. Combines
 one or more sets of `link` paths specifying directed associations between
-variables. The model is assumed to be a directed acyclic graph.}
+variables. The model is assumed to be a directed acyclic graph. With the
+discriminant family, supplying a model triggers outcome-informed
+(predictive) reweighting of the predictor composites, and a \code{warning()}
+is issued: weights tuned to predict an outcome must not be used to test that
+same predictor-outcome path on the same data (circularity). See
+\code{\link{discriminant_score}}.}
 
 \item{weight}{The weighting schema used to calculate composite scores. Choose
   from the following families:
