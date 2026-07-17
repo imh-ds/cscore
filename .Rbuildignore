@@ -7,5 +7,7 @@ manuscript*
 .github*
 .Rhistory
 ^\.claude$
+^\.agents$
+^changelog$
 ^CITATION$
 ^composite\.xlsx$

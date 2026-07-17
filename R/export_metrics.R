@@ -37,15 +37,13 @@
 #' single-indicator composites, by \code{calc_single_indicator()}.
 #'
 #' For multi-indicator composites, the exported indicator loadings are the
-#' corrected item-total correlations implemented in \code{calc_metrics()},
-#' namely
-#'
-#' \deqn{\lambda_j = \mathrm{cor}\!\left(x_j,\,
-#' \frac{\sum_{k \neq j} x_k w_k^{*}}{\sum_{k \neq j}|w_k^{*}|}\right)}
-#'
-#' computed with pairwise-complete observations. This differs from correlating
-#' each indicator with a composite that already contains that same indicator,
-#' and therefore avoids part-whole inflation.
+#' standardized single-factor loadings implemented in \code{calc_metrics()}:
+#' each \eqn{\lambda_j} is the standardized loading of indicator \eqn{j} on a
+#' minimum-residual one-factor solution of the indicators' pairwise-complete
+#' correlation matrix (\code{psych::fa(..., nfactors = 1, fm = "minres")}). This
+#' avoids both the part-whole inflation of correlating an indicator with a
+#' composite that already contains it and the attenuation of item-rest
+#' (corrected item-total) correlations.
 #'
 #' The exported composite-level statistics are also inherited from
 #' \code{calc_metrics()}. Cronbach's alpha (\eqn{\alpha}) is obtained from

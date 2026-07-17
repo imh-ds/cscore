@@ -75,7 +75,6 @@
 #' }
 #'
 #' @importFrom stats setNames as.formula
-#' @importFrom utils menu
 #'
 #' @keywords internal
 calc_discriminant_composite <- function(

@@ -1,4 +1,5 @@
 # Silence R CMD check notes for tidy-eval column references used in dplyr verbs.
+#' @importFrom utils globalVariables
 utils::globalVariables(c(
   ".",
   "Composite",

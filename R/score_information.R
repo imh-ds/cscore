@@ -145,14 +145,13 @@
 #'
 #' When \code{return_metrics = TRUE}, downstream metrics are computed from the
 #' raw indicators and final normalized weights using \code{calc_metrics()}. The
-#' reported indicator loadings are corrected item-total correlations. For
-#' indicator \eqn{j}, the implemented loading is
-#'
-#' \deqn{\lambda_j = \mathrm{cor}\!\left(x_j,\,
-#' \frac{\sum_{k \neq j} x_k w_k^{*}}{\sum_{k \neq j}|w_k^{*}|}\right)}
-#'
-#' computed with pairwise-complete observations. This avoids part-whole
-#' inflation.
+#' reported indicator loadings \eqn{\lambda_j} are standardized loadings on a
+#' single common factor, estimated by a minimum-residual one-factor solution of
+#' the indicators' pairwise-complete correlation matrix
+#' (\code{psych::fa(..., nfactors = 1, fm = "minres")}). Unlike an item-rest
+#' (corrected item-total) correlation, a factor loading is not attenuated toward
+#' the construct, so AVE and \eqn{\rho_c} are not deflated; unlike an item-total
+#' correlation against the full composite, it avoids part-whole inflation.
 #'
 #' Using these corrected loadings, the downstream validity metrics are computed
 #' as

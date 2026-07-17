@@ -24,65 +24,109 @@ as a formatted excel workbook.}
 A formatted excel workbook saved to specified file path.
 }
 \description{
-A function to export a \code{metrics} object as a formatted
-  excel workbook to the specified \code{file} path. The format is consistent
-  with what is typically reported in APA 7th edition, and can be copy and
-  pasted directly into a Word document or similar document software.
+Export the metric output returned by the scoring functions as a
+  formatted Excel workbook containing one worksheet for indicator-level
+  measurement-model results and one worksheet for composite-level
+  reliability/convergent-validity summaries.
 }
 \details{
-Indicator loadings (\eqn{\lambda_i}) are computed as the bivariate
-correlation between each indicator \eqn{I_i} and the correlation-weighted
-composite score \eqn{\bar{C}_c}:
+\code{export_metrics()} is a presentation-layer function. It does
+\emph{not} estimate loadings, weights, reliability coefficients, or AVE on
+its own. Instead, it expects the already-computed output produced by the
+scoring functions when \code{return_metrics = TRUE}, and then formats those
+results into an Excel workbook using \pkg{openxlsx}.
 
-\deqn{\lambda_i = \mathrm{cor}(I_i, \bar{C}_c)}
+The function assumes that its \code{metrics} argument is a named list with
+indicator-level, construct-level, and discriminant-validity components:
 
-Two reliability metrics are reported: Cronbach's alpha (\eqn{\alpha}) and
-composite reliability (\eqn{\rho_c}, also referred to as McDonald's omega,
-\eqn{\omega}).
+\enumerate{
+  \item \code{metrics[["metrics"]]}: an indicator-level table containing
+  \code{composite}, \code{indicator}, \code{loadings}, and \code{weights}.
+  \item \code{metrics[["validity"]]}: a composite-level table containing
+  \code{composite}, \code{alpha}, \code{rhoc}, \code{ave},
+  \code{loading_range}, \code{weight_range}, \code{sqrt_ave},
+  \code{max_interconstruct_corr}, \code{fornell_larcker}, \code{max_htmt},
+  \code{htmt}, and \code{discriminant_validity}.
+  \item \code{metrics[["discriminant_summary"]]}: the reporting-set
+  discriminant-validity summary table.
+  \item \code{metrics[["fornell_larcker"]]}: a square reporting-set matrix
+  whose diagonal is \eqn{\sqrt{AVE}} and whose off-diagonals are absolute
+  inter-construct correlations.
+  \item \code{metrics[["htmt"]]}: a square reporting-set matrix of pairwise
+  HTMT ratios.
+}
 
-Cronbach's alpha is defined as:
+These quantities are produced upstream by \code{calc_metrics()} and, for
+single-indicator composites, by \code{calc_single_indicator()}.
 
-\deqn{\alpha = \frac{k \bar{c}}{\bar{v} + (k - 1)\bar{c}}}
+For multi-indicator composites, the exported indicator loadings are the
+standardized single-factor loadings implemented in \code{calc_metrics()}:
+each \eqn{\lambda_j} is the standardized loading of indicator \eqn{j} on a
+minimum-residual one-factor solution of the indicators' pairwise-complete
+correlation matrix (\code{psych::fa(..., nfactors = 1, fm = "minres")}). This
+avoids both the part-whole inflation of correlating an indicator with a
+composite that already contains it and the attenuation of item-rest
+(corrected item-total) correlations.
 
-where \eqn{k} is the number of indicators, \eqn{\bar{c}} is the average
-inter-item covariance, and \eqn{\bar{v}} is the average indicator variance.
-Alpha assumes tau-equivalence (equal loadings across indicators) and is
-sensitive to the number of indicators. While widely used, it is not
-recommended due to these limitations; it is reported here for completeness
-only.
+The exported composite-level statistics are also inherited from
+\code{calc_metrics()}. Cronbach's alpha (\eqn{\alpha}) is obtained from
+\code{ltm::cronbach.alpha()} when \pkg{ltm} is installed. The exported
+weighted composite reliability (\eqn{\rho_c}) is
 
-Composite reliability (\eqn{\rho_c}) is a weighted reliability estimate based
-on user-defined indicator weights. It uses the same formula as McDonald's
-omega but allows loadings to be weighted according to the composite score
-structure:
+\deqn{\rho_c =
+\frac{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2}
+{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2 +
+ \sum_{j=1}^{m}(1-\lambda_j^2)(w_j^{*})^2}}
 
-\deqn{\rho_c = \frac{\left(\sum \lambda_i w_i\right)^2}{\left(\sum \lambda_i
-w_i\right)^2 + \sum e_{w_i}}}
+and the exported Average Variance Extracted (AVE) is
 
-where \eqn{w_i} is the weight for indicator \eqn{i}, and \eqn{e_{w_i}} is the
-weighted measurement error:
+\deqn{\mathrm{AVE} =
+\frac{\sum_{j=1}^{m}\lambda_j^2 w_j^{*}}
+{\sum_{j=1}^{m}\lambda_j^2 w_j^{*} +
+ \sum_{j=1}^{m}(1-\lambda_j^2) w_j^{*}}}
 
-\deqn{e_{w_i} = (1 - \lambda_i^2) \cdot w_i^2}
+where \eqn{w_j^{*}} denotes the final normalized indicator-weight vector used
+by the relevant scoring method, or the reporting-weight vector derived from
+it in methods such as the median family.
 
-Although this metric is labeled \eqn{\rho_c} to align with PLS-SEM
-nomenclature, it is mathematically equivalent to omega and may be reported as
-either.
+The function then creates a workbook with four worksheets:
 
-Average Variance Extracted (AVE) measures the proportion of variance captured
-by the construct relative to measurement error. It is defined as:
+\enumerate{
+  \item \strong{Metrics}: indicator-level measurement-model output, with
+  columns relabeled to \code{Composite}, \code{Indicator}, \code{Loadings},
+  and \code{Weights}.
+  \item \strong{Validity}: composite-level output, with columns relabeled to
+  \code{Composite}, \code{alpha}, \code{rhoc}, \code{AVE}, the
+  discriminant-validity summary fields, \code{loading range}, and
+  \code{weight range}.
+  \item \strong{Fornell-Larcker}: appendix-style matrix output for the
+  reporting set.
+  \item \strong{HTMT}: appendix-style matrix of pairwise HTMT ratios for the
+  reporting set.
+}
 
-\deqn{\mathrm{AVE} = \frac{\sum \lambda_{w_i}^2}{\sum \lambda_{w_i}^2 + \sum
-e_{w_i}}}
+In both sheets, underscores in composite names are replaced by spaces and
+then title-cased using \code{stringr::str_to_title()}. In the indicator-level
+sheet, repeated composite labels are blanked after their first occurrence so
+that rows visually group by construct.
 
-where the weighted squared loading is:
+The workbook layout is fixed by the implementation:
 
-\deqn{\lambda_{w_i}^2 = \lambda_i^2 \cdot w_i}
+\enumerate{
+  \item Titles are written starting at row 3, column 2.
+  \item The data tables begin two rows below each title.
+  \item Numeric columns are formatted to the requested number of decimal
+  places via an \pkg{openxlsx} number format string constructed from
+  \code{digits}.
+  \item Header rows receive bold formatting and top/bottom borders.
+  \item The last data row receives bottom-border styling.
+  \item Range columns in the validity sheet are horizontally centered.
+  \item Column widths for the first identifier columns and the range columns
+  are adjusted from the maximum printed string length in those columns.
+  \item Gridlines are hidden on both worksheets.
+}
 
-AVE is commonly used in the Fornell-Larcker criterion for discriminant
-validity:
-
-\deqn{\sqrt{\mathrm{AVE}_i} > \max_{j} (r_{ij})}
-
-That is, the square root of AVE for a construct should exceed its highest
-correlation with any other construct.
+The function writes a footnote on the \code{Validity} sheet explaining the
+abbreviations used in the exported table. Finally, the workbook is saved to
+\code{file} with \code{overwrite = TRUE}.
 }

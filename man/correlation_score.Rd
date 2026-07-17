@@ -56,51 +56,133 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
  \item \strong{Validity}: A matrix of composite reliability and validity
  metrics.
+ \item \strong{Discriminant Summary}: A matrix of reporting-set
+ discriminant-validity statistics and PASS/FAIL results.
+ \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+ \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+ correlations.
+ \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators
-  that go into each respective composite variable.
+Create lower- and higher-order composite scores from named sets
+  of numeric indicators using either correlation-based weights or
+  one-factor regression weights derived from the indicators' correlation
+  structure.
 }
 \details{
-Composite scores are calculated as either \strong{correlation-weighted} or
-\strong{regression-weighted} means of the indicators.
+Composite scoring is implemented by \code{calc_cov_composite()},
+\code{safe_normalize()}, \code{weighted_row_mean()}, and
+\code{calc_metrics()}. The operative algorithm is:
 
-\emph{Correlation-weighted scores.} For a given composite, a correlation
-matrix is computed using all its indicators. \eqn{w_j} denotes the weight
-for indicator \eqn{j}, computed as the average correlation with all other
-indicators:
+\enumerate{
+  \item The supplied \code{composite_list} is split into lower-order
+  composites (defined directly by observed indicators) and higher-order
+  composites (defined by previously computed composites). Lower-order
+  composites are scored first, appended to \code{data}, and higher-order
+  composites are then scored from those newly available columns.
+  \item For a target composite with \eqn{m} indicators, construct the
+  \eqn{N \times m} indicator matrix \eqn{\mathbf{X} = [x_{cj}]}, where
+  \eqn{c = 1, \ldots, N} indexes cases and \eqn{j = 1, \ldots, m} indexes
+  indicators.
+  \item If \eqn{m = 1}, the single indicator is returned unchanged. When
+  \code{return_metrics = TRUE}, its reported weight, loading, alpha,
+  composite reliability, and AVE are all set to 1 by definition.
+  \item If \eqn{m > 1}, raw weights are computed by the selected weighting
+  method and then normalized with \code{safe_normalize()}:
 
-\deqn{w_j = \frac{1}{n} \sum_{i=1}^{n} r_{ij}, \quad i \neq j}
+  \deqn{w_j^{*} = \frac{w_j}{\frac{1}{m}\sum_{k=1}^{m}|w_k|}}
 
-where \eqn{r_{ij}} is the Pearson correlation between indicators \eqn{i} and
-\eqn{j}, and \eqn{n} is the number of indicators. Self-correlations
-(\eqn{r_{jj}}) are excluded. The weights are then normalized:
+  This is the exact normalization used in the code. It scales weights so
+  that their mean absolute value equals 1, which prevents instability when
+  weights contain mixed signs.
+  \item Composite scores are then computed casewise using only the observed
+  indicators for that case. If \eqn{O_c} is the set of non-missing
+  indicators for case \eqn{c}, then \code{weighted_row_mean()} returns
 
-\deqn{w_j^{*} = \frac{w_j}{\frac{1}{m} \sum_{k=1}^{m} w_k}}
+  \deqn{C_c = \frac{\sum_{j \in O_c} x_{cj} w_j^{*}}{\sum_{j \in O_c}|w_j^{*}|}}
 
-where \eqn{m} is the number of indicators in the composite. The
-correlation-weighted composite score \eqn{\bar{C}_c} for case \eqn{c} is
-then:
+  If all indicators are missing for a case, \eqn{C_c} is \code{NA}. When
+  all weights are positive, this reduces to the usual weighted mean over the
+  observed indicators.
+}
 
-\deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j^{*}}
+\strong{Correlation weighting.} The function computes the pairwise-complete
+Pearson correlation matrix \eqn{\mathbf{R} = [r_{ij}]} with
+\code{stats::cor(..., use = "pairwise.complete.obs")}. The diagonal is then
+set to missing so that self-correlations do not contribute. For indicator
+\eqn{j}, the raw weight is the mean of the available off-diagonal
+correlations in column \eqn{j}:
 
-where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}.
+\deqn{w_j = \frac{1}{m_j}\sum_{i \neq j} r_{ij}}
 
-\emph{Regression-weighted scores.} A linear model is fit with the
-correlation-weighted composite scores as the outcome and the indicators as
-predictors:
+where \eqn{m_j} is the number of non-missing off-diagonal correlations for
+indicator \eqn{j}. Under complete data and non-degenerate items,
+\eqn{m_j = m - 1}; if some correlations are undefined, the average is taken
+over the remaining defined entries because \code{colMeans(..., na.rm = TRUE)}
+is used. If all off-diagonal correlations for an indicator are undefined,
+the raw weight is replaced with 1 before normalization, giving that
+indicator an equal baseline weight.
 
-\deqn{\bar{C}_c = \beta_0 + \sum_{j=1}^{m} \beta_j I_{cj} + \varepsilon_c}
+\strong{Regression weighting.} The function uses the one-component solution
+from \code{psych::principal(..., nfactors = 1, rotate = "none")} and takes
+the first column of \code{pca_model$weights}. These are the regression
+factor score coefficients for the one-factor principal-components solution.
+In the standard full-rank case, they correspond to Thomson regression
+scoring:
 
-The regression weights are the standardized coefficients \eqn{\beta_j},
-normalized as:
+\deqn{\mathbf{w} = \mathbf{R}^{-1}\boldsymbol{\lambda}}
 
-\deqn{w_j = \frac{\beta_j}{\frac{1}{m} \sum_{k=1}^{m} \beta_k}}
+where \eqn{\mathbf{R}} is the inter-indicator correlation matrix and
+\eqn{\boldsymbol{\lambda}} is the loading vector for the first principal
+component. Relative to simple correlation weighting, the
+\eqn{\mathbf{R}^{-1}} term shrinks indicators that are highly redundant with
+the others, so the resulting weights reflect unique rather than merely
+average shared variance.
 
-The regression-weighted composite score is then:
+The implementation includes an explicit zero-variance fallback. If one or
+more indicators have zero variance, PCA-based regression weights are
+computed only on the subset of indicators with non-zero variance, provided
+that at least two such indicators remain. Indicators excluded because of
+zero variance receive raw weight 1. If the PCA fit fails, the non-zero-
+variance indicators also fall back to raw weight 1. The full vector is then
+normalized in the same way as above.
 
-\deqn{\bar{C}_c = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j}
+In both weighting modes, negative weights trigger a warning because they
+often indicate reverse-keyed indicators that have not been recoded. The
+function does not reverse-score those items automatically; it uses the
+weights implied by the observed data.
+
+When \code{return_metrics = TRUE}, the downstream metric calculations are
+based on the final composite scores and normalized weights. The reported
+indicator loadings \eqn{\lambda_j} are standardized loadings on a single
+common factor, estimated by a minimum-residual one-factor solution of the
+indicators' pairwise-complete correlation matrix
+(\code{psych::fa(..., nfactors = 1, fm = "minres")}). A factor loading is
+the quantity the AVE and \eqn{\rho_c} formulas below are derived for: unlike
+an item-rest (corrected item-total) correlation it is not attenuated toward
+the construct, so AVE and \eqn{\rho_c} are not deflated, and unlike an
+item-total correlation against the full composite it is free of part-whole
+inflation.
+
+Using these corrected loadings, the downstream validity metrics are computed
+as
+
+\deqn{\mathrm{AVE} =
+\frac{\sum_{j=1}^{m}\lambda_j^2 w_j^{*}}
+{\sum_{j=1}^{m}\lambda_j^2 w_j^{*} +
+ \sum_{j=1}^{m}(1-\lambda_j^2) w_j^{*}}}
+
+\deqn{\rho_c =
+\frac{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2}
+{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2 +
+ \sum_{j=1}^{m}(1-\lambda_j^2)(w_j^{*})^2}}
+
+Cronbach's alpha is obtained from \code{ltm::cronbach.alpha()} when
+\pkg{ltm} is installed and otherwise returned as \code{NA}. Alpha is
+included for conventional reporting, but the weighted composite reliability
+\eqn{\rho_c} is the metric that most directly reflects the weighted scoring
+model implemented here.
 }
 \examples{
 

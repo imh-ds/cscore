@@ -52,6 +52,12 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
  \item \strong{Validity}: A matrix of composite reliability and validity
  metrics.
+ \item \strong{Discriminant Summary}: A matrix of reporting-set
+ discriminant-validity statistics and PASS/FAIL results.
+ \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+ \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+ correlations.
+ \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 }
 }
 \description{

@@ -30,19 +30,22 @@ calc_metrics <- function(
   name
 ){
   
-  # Corrected item-total correlations: each item is correlated with the
-  # weighted composite computed from all *other* items, avoiding part-whole
-  # inflation that inflates loadings, AVE, and reliability when items are
-  # part of the composite they are correlated against.
-  loadings <- sapply(seq_len(ncol(df)), function(j) {
-    rest_idx <- setdiff(seq_len(ncol(df)), j)
-    composite_without_j <- weighted_row_mean(
-      df[, rest_idx, drop = FALSE],
-      weights[rest_idx]
-    )
-    stats::cor(df[, j], composite_without_j, use = "pairwise.complete.obs")
-  })
-  names(loadings) <- colnames(df)
+  # Standardized loadings from a single common-factor model.
+  #
+  # The AVE and composite-reliability (rhoc/omega) formulas below are derived
+  # for *standardized factor loadings* on the common construct. Two proxies
+  # that were used previously are both biased for that quantity:
+  #   * item-total correlations (item vs. the composite that CONTAINS it) are
+  #     part-whole INFLATED, especially for short scales;
+  #   * corrected item-total / item-rest correlations (item vs. the composite of
+  #     all OTHER items) are systematically ATTENUATED relative to the factor
+  #     loading (e.g., for a 2-item scale the item-rest correlation equals the
+  #     inter-item r, whereas the loading is sqrt(r)), which DEFLATES AVE, rhoc,
+  #     and every downstream Fornell-Larcker verdict.
+  # A one-factor solution estimates the loadings directly and is unbiased for
+  # both problems. rhoc computed from these loadings reproduces McDonald's
+  # omega for unit weights. See changelog/2026-07-17-factor-analytic-loadings.md.
+  loadings <- fa_loadings(df, composite_score)
     
     # Get weighted loadings squared
     loadings_squared <- (loadings^2)*weights
@@ -139,7 +142,108 @@ calc_metrics <- function(
       composite_metrics  = composite_metrics,
       composite_validity = composite_validity
     )
-        
-      
+
+
 }
-      
+
+
+#' Standardized Single-Factor Loadings for Metric Reporting (Internal)
+#'
+#' Estimates standardized loadings on one common factor from the indicators'
+#' pairwise correlation matrix, for use in the AVE and composite-reliability
+#' formulas. A minimum-residual (\code{fm = "minres"}) one-factor extraction is
+#' used; if it fails, the function falls back to the first principal-component
+#' loadings, and finally to each indicator's correlation with the observed
+#' composite score. Loadings are clamped to \eqn{[-1, 1]} so that squared
+#' loadings and implied error variances stay in \eqn{[0, 1]} even under Heywood
+#' cases, keeping AVE and \code{rhoc} bounded.
+#'
+#' @param df A numeric data frame of indicators (may contain \code{NA}).
+#' @param composite_score The observed composite score, used only for the
+#'   final fallback when a factor solution is unavailable.
+#'
+#' @return A named numeric vector of standardized loadings, one per column of
+#'   \code{df}.
+#'
+#' @keywords internal
+fa_loadings <- function(df, composite_score) {
+
+  nm <- colnames(df)
+  m  <- ncol(df)
+
+  # Pairwise correlation matrix (mirrors the missing-data handling used for the
+  # weights). suppressWarnings guards zero-variance columns, which yield NA.
+  cor_matrix <- suppressWarnings(
+    stats::cor(df, use = "pairwise.complete.obs")
+  )
+
+  loadings <- stats::setNames(rep(NA_real_, m), nm)
+
+  # Indicators with a fully defined row/column in the correlation matrix are
+  # eligible for the factor solution; degenerate (e.g., zero-variance) items are
+  # excluded and handled by the fallback below.
+  usable <- if (m >= 2) {
+    apply(cor_matrix, 1, function(r) all(is.finite(r)))
+  } else {
+    rep(FALSE, m)
+  }
+
+  if (sum(usable) >= 2) {
+
+    R <- cor_matrix[usable, usable, drop = FALSE]
+
+    fitted <- tryCatch(
+      {
+        fa_fit <- suppressWarnings(
+          psych::fa(
+            R,
+            nfactors = 1,
+            fm       = "minres",
+            rotate   = "none",
+            n.obs    = nrow(df),
+            warnings = FALSE
+          )
+        )
+        as.vector(fa_fit$loadings[, 1])
+      },
+      error = function(e) NULL
+    )
+
+    # Fallback 1: first principal-component loadings if minres fails.
+    if (is.null(fitted) || any(!is.finite(fitted))) {
+      fitted <- tryCatch(
+        {
+          pc_fit <- suppressWarnings(
+            psych::principal(R, nfactors = 1, rotate = "none")
+          )
+          as.vector(pc_fit$loadings[, 1])
+        },
+        error = function(e) NULL
+      )
+    }
+
+    if (!is.null(fitted) && all(is.finite(fitted))) {
+      loadings[usable] <- fitted
+    }
+  }
+
+  # Fallback 2: any indicator still without a loading (degenerate item, or no
+  # factor solution) is scored by its correlation with the observed composite.
+  missing_load <- !is.finite(loadings)
+  if (any(missing_load)) {
+    for (j in which(missing_load)) {
+      loadings[j] <- suppressWarnings(
+        stats::cor(df[, j], composite_score, use = "pairwise.complete.obs")
+      )
+    }
+  }
+
+  # Remaining undefined loadings (fully degenerate item) contribute nothing.
+  loadings[!is.finite(loadings)] <- 0
+
+  # Clamp to [-1, 1] to keep 1 - loadings^2 a valid error variance under
+  # Heywood cases, so AVE and rhoc remain in [0, 1].
+  loadings <- pmin(pmax(loadings, -1), 1)
+
+  stats::setNames(loadings, nm)
+}

@@ -54,6 +54,7 @@ rsconnect/
 /archive/legacy-repo-files/.Rhistory
 /archive/legacy-repo-files/*.tar.gz
 /archive/legacy-repo-files/*.Rcheck/
+/changelog/
 
 # AI Agent folders
 .claude/

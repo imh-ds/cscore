@@ -8,9 +8,14 @@
 - Fixed circular weighting in the `"pca"`/`"glm"` discriminant scheme: replaced
   elastic-net re-regression of PC1 scores onto the same items with direct PC1
   loadings (`psych::principal()$loadings`).
-- Replaced part-whole item–total correlations with corrected item-total
-  correlations (CITC): each item is now correlated against the composite built
-  from all *other* items, eliminating inflation of loadings, AVE, and `rhoc`.
+- Reported indicator loadings are now standardized loadings from a single
+  common-factor (minres one-factor) solution, replacing the corrected
+  item-total (item-rest) correlations used previously. Item-rest correlations
+  are attenuated relative to factor loadings, which systematically **deflated**
+  `ave` and `rhoc` and biased the Fornell-Larcker verdicts toward FAIL. With
+  factor loadings, `rhoc` reproduces McDonald's omega for unit weights and AVE
+  recovers the true value. Composite scores are unchanged. See
+  `changelog/2026-07-17-factor-analytic-loadings.md`.
 - Fixed the missing-data path in `"median_decay"` / `"median_gauss"`: missing
   items' weights are now zeroed out before row-wise renormalization, matching
   the behaviour of `weighted_row_mean()`.

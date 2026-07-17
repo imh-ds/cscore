@@ -75,50 +75,185 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
  \item \strong{Validity}: A matrix of composite reliability and validity
  metrics.
+ \item \strong{Discriminant Summary}: A matrix of reporting-set
+ discriminant-validity statistics and PASS/FAIL results.
+ \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+ \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+ correlations.
+ \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators
-  that go into each respective composite variable.
+Create lower- and higher-order composite scores from named sets
+  of numeric indicators using weights derived from average normalized mutual
+  information among the indicators.
 }
 \details{
-Composite scores are computed as the \strong{information-weighted}
-  mean of the indicators.
+Information-weighted composite scoring is implemented by
+\code{information_score()}, \code{calc_mi_composite()},
+\code{coerce_to_discrete_if_integer_like()}, \code{is_discrete_variable()},
+\code{safe_normalize()}, \code{weighted_row_mean()}, and
+\code{calc_metrics()}. The operative algorithm is as follows.
 
-  \emph{Information-weighted scores.} For a given composite, pairwise mutual
-  information (MI) is computed between all indicators to form an information
-  matrix \eqn{I_{ij}}. Self-information values on the diagonal are excluded.
-  Each mutual information value is then normalized to obtain the Normalized
-  Mutual Information (NMI).
+\strong{1. Composite ordering and single-indicator behavior.}
 
-  The NMI between variables \eqn{i} and \eqn{j} can be computed using either
-  arithmetic mean:
+The supplied \code{composite_list} is split into lower-order composites
+(defined directly by observed indicators) and higher-order composites
+(defined by previously computed composites). Lower-order composites are
+scored first and appended to \code{data}; higher-order composites, if any,
+are then scored from those newly appended columns.
 
-  \deqn{\mathrm{NMI}(i, j) = \frac{2 \cdot I(i, j)}{H(i) + H(j)}}
+If a target composite contains a single indicator, that indicator is returned
+unchanged. When \code{return_metrics = TRUE}, its weight, loading, alpha,
+composite reliability, and AVE are all reported as 1 by definition.
 
-  or geometric mean:
+\strong{2. Raw indicator matrix and discretization path.}
 
-  \deqn{\mathrm{NMI}(i, j) = \frac{I(i, j)}{\sqrt{H(i) \cdot H(j)}}}
+For a composite with \eqn{m} indicators, let
+\eqn{\mathbf{X}^{\mathrm{raw}} = [x_{cj}]} denote the raw \eqn{N \times m}
+numeric indicator matrix. The mutual-information weighting step is not
+performed directly on \eqn{\mathbf{X}^{\mathrm{raw}}}; instead, the function
+constructs a working matrix for entropy and mutual-information estimation.
 
-  where \eqn{I(i, j)} is the mutual information and \eqn{H(i)} and \eqn{H(j)}
-  are the entropies of variables \eqn{i} and \eqn{j}, respectively. The
-  method is selected via \code{nmi_method}. The information weight for
-  indicator \eqn{j} is the average of its NMI values:
+First, each indicator is passed through
+\code{coerce_to_discrete_if_integer_like()}. If a numeric indicator has at
+most \code{threshold} unique non-missing values, and at least one of those
+values is non-integer-like, the vector is rounded to the nearest integer.
+This is a targeted coercion step meant to preserve Likert-type data stored as
+numeric decimals.
 
-  \deqn{w_j = \frac{1}{n} \sum_{i \neq j} \mathrm{NMI}(i, j)}
+After that coercion step, each variable is tested with
+\code{is_discrete_variable(..., threshold = threshold)}. Factors, ordered
+factors, integers, and integer-like numerics are treated as discrete. Other
+numeric vectors are also treated as discrete when they have no more than
+\code{threshold} unique observed values. If any indicator still fails this
+discreteness test, the full indicator data frame is discretized using
+\code{infotheo::discretize()} before mutual information is computed.
 
-  where \eqn{n} is the number of indicators and the sum excludes self-pairs.
-  The weights are then normalized:
+Consequently, the weighting stage may operate on either:
 
-  \deqn{w_j^{*} = \frac{w_j}{\frac{1}{m} \sum_{k=1}^{m} w_k}}
+\enumerate{
+  \item the original numeric values after possible rounding of low-cardinality
+  integer-like variables, or
+  \item a fully discretized version of the indicator matrix produced by
+  \code{infotheo::discretize()}.
+}
 
-  where \eqn{m} is the number of indicators in the composite. The
-  information-weighted composite score \eqn{\bar{C}_{c}^{\mathrm{MI}}} for
-  case \eqn{c} is calculated as:
+The composite scores themselves are still computed on the original raw
+indicators \eqn{\mathbf{X}^{\mathrm{raw}}}, not on the discretized data.
 
-  \deqn{\bar{C}_{c}^{\mathrm{MI}} = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_j^{*}}
+\strong{3. Pairwise normalized mutual information.}
 
-  where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}.
+Let \eqn{\mathbf{X}^{\mathrm{disc}}} denote the working indicator matrix used
+for information-theoretic calculations after the steps above. For each pair
+of indicators \eqn{i} and \eqn{j}, the function computes raw mutual
+information using \code{infotheo::mutinformation()}:
+
+\deqn{M_{ij} = I(X_i; X_j)}
+
+It also computes marginal entropies with
+\code{infotheo::entropy(..., method = entropy)}:
+
+\deqn{H_i = H(X_i), \qquad H_j = H(X_j)}
+
+The normalized mutual information (NMI) is then defined by the selected
+\code{nmi_method}.
+
+For \code{nmi_method = "geometric"}:
+
+\deqn{\mathrm{NMI}_{ij} =
+\begin{cases}
+0, & \text{if } H_i = 0 \text{ or } H_j = 0 \\
+\frac{M_{ij}}{\sqrt{H_i H_j}}, & \text{otherwise}
+\end{cases}}
+
+For \code{nmi_method = "average"}:
+
+\deqn{\mathrm{NMI}_{ij} =
+\begin{cases}
+0, & \text{if } H_i + H_j = 0 \\
+\frac{2M_{ij}}{H_i + H_j}, & \text{otherwise}
+\end{cases}}
+
+These values populate a symmetric matrix \eqn{\mathbf{N} = [\mathrm{NMI}_{ij}]}
+whose diagonal is later set to missing so that self-associations do not enter
+the weighting step.
+
+Zero-variance indicators imply zero entropy and therefore produce zero NMI
+whenever they are paired with any other indicator. The function warns when
+such indicators are present.
+
+\strong{4. Information weights and normalization.}
+
+After the diagonal of \eqn{\mathbf{N}} is set to \code{NA}, the raw weight
+for indicator \eqn{j} is the mean of the off-diagonal NMI values in its
+column:
+
+\deqn{w_j = \frac{1}{m_j}\sum_{i \neq j}\mathrm{NMI}_{ij}}
+
+where \eqn{m_j} is the number of non-missing off-diagonal entries for
+indicator \eqn{j}. Under ordinary conditions, \eqn{m_j = m - 1}.
+
+The resulting weight vector is normalized with \code{safe_normalize()},
+meaning that each weight is divided by the mean absolute weight:
+
+\deqn{w_j^{*} = \frac{w_j}{\frac{1}{m}\sum_{k=1}^{m}|w_k|}}
+
+This is the exact normalization used in the code. If all raw weights are
+effectively zero, \code{safe_normalize()} falls back to equal weights of 1
+for all indicators. As a result, a composite whose pairwise NMI structure is
+completely degenerate does not fail; it reverts to equal weighting.
+
+\strong{5. Casewise composite score on the raw indicators.}
+
+Although weights are estimated from the discretized working matrix, the final
+composite is computed from the original raw indicators by
+\code{weighted_row_mean(df_raw, weights)}. If \eqn{O_c} is the set of
+non-missing indicators for case \eqn{c}, then the implemented score is
+
+\deqn{C_c = \frac{\sum_{j \in O_c} x_{cj} w_j^{*}}{\sum_{j \in O_c}|w_j^{*}|}}
+
+If all indicators are missing for a case, the composite is \code{NA}. When
+all weights are positive, this is the ordinary weighted mean over the
+observed indicators.
+
+An important implication of the implementation is that missing values are not
+imputed prior to mutual-information estimation in this scoring function.
+Because the discretization and entropy routines operate on the observed data
+as passed in, users should generally impute missing indicator values before
+applying \code{information_score()} if they want the MI weights to reflect
+substantive categories rather than missingness patterns.
+
+\strong{6. Reliability and validity metrics.}
+
+When \code{return_metrics = TRUE}, downstream metrics are computed from the
+raw indicators and final normalized weights using \code{calc_metrics()}. The
+reported indicator loadings \eqn{\lambda_j} are standardized loadings on a
+single common factor, estimated by a minimum-residual one-factor solution of
+the indicators' pairwise-complete correlation matrix
+(\code{psych::fa(..., nfactors = 1, fm = "minres")}). Unlike an item-rest
+(corrected item-total) correlation, a factor loading is not attenuated toward
+the construct, so AVE and \eqn{\rho_c} are not deflated; unlike an item-total
+correlation against the full composite, it avoids part-whole inflation.
+
+Using these corrected loadings, the downstream validity metrics are computed
+as
+
+\deqn{\mathrm{AVE} =
+\frac{\sum_{j=1}^{m}\lambda_j^2 w_j^{*}}
+{\sum_{j=1}^{m}\lambda_j^2 w_j^{*} +
+ \sum_{j=1}^{m}(1-\lambda_j^2) w_j^{*}}}
+
+\deqn{\rho_c =
+\frac{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2}
+{\left(\sum_{j=1}^{m}\lambda_j w_j^{*}\right)^2 +
+ \sum_{j=1}^{m}(1-\lambda_j^2)(w_j^{*})^2}}
+
+Cronbach's alpha is obtained from \code{ltm::cronbach.alpha()} when
+\pkg{ltm} is installed and otherwise returned as \code{NA}. As with the
+other weighted scoring functions, the weighted composite reliability
+\eqn{\rho_c} is the metric most directly aligned with the implemented
+weighting model.
 }
 \examples{
 

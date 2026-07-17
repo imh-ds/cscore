@@ -193,16 +193,15 @@
 #'
 #' When \code{return_metrics = TRUE}, the downstream metrics are computed by
 #' \code{calc_metrics()} using the final normalized weights and the composite
-#' score produced above. The reported item loadings are corrected item-total
-#' correlations rather than raw correlations with the full composite that
-#' contains the focal item. For indicator \eqn{j}, the implemented loading is
-#'
-#' \deqn{\lambda_j = \mathrm{cor}\!\left(x_j,\,
-#' \frac{\sum_{k \neq j} x_k w_k^{*}}{\sum_{k \neq j}|w_k^{*}|}\right)}
-#'
-#' computed with pairwise-complete observations. This avoids part-whole
-#' inflation. The same downstream metric formulas documented for
-#' \code{correlation_score()} then apply:
+#' score produced above. The reported item loadings \eqn{\lambda_j} are
+#' standardized loadings on a single common factor, estimated by a
+#' minimum-residual one-factor solution of the indicators' pairwise-complete
+#' correlation matrix (\code{psych::fa(..., nfactors = 1, fm = "minres")}).
+#' Unlike an item-rest (corrected item-total) correlation, a factor loading is
+#' not attenuated toward the construct, so AVE and \eqn{\rho_c} are not
+#' deflated; unlike an item-total correlation against the full composite, it
+#' avoids part-whole inflation. The same downstream metric formulas documented
+#' for \code{correlation_score()} then apply:
 #'
 #' \deqn{\mathrm{AVE} =
 #' \frac{\sum_{j=1}^{m}\lambda_j^2 w_j^{*}}

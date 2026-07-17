@@ -178,8 +178,8 @@
 #'  \itemize{
 #'  \item \strong{Data}: A dataframe with the composite variables appended as
 #'  new variables.
-#'  \item \strong{Metrics}: A matrix of indicator corrected item-total
-#'  correlations (loadings) and indicator weights.
+#'  \item \strong{Metrics}: A matrix of indicator standardized single-factor
+#'  loadings and indicator weights.
 #'  \item \strong{Validity}: A matrix of composite-level reliability and
 #'  convergent validity metrics, including:
 #'    \itemize{

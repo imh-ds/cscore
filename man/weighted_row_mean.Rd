@@ -17,7 +17,8 @@ A numeric vector of weighted means, one for each row of \code{df}.
 }
 \description{
 Computes a weighted mean for each row of a data frame or matrix, allowing for
-missing values. Weights are normalized within each row to ensure they sum to
-1 over the non-missing entries.
+missing values. Weights are normalized within each row using the sum of their
+absolute values, ensuring numerical stability when weights have mixed signs
+(e.g., from negative correlation weights caused by reverse-keyed items).
 }
 \keyword{internal}

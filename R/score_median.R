@@ -151,10 +151,12 @@
 #' methods are \emph{sample summaries of respondent-specific weights}, not the
 #' exact row-level weights used to compute every individual composite score.
 #'
-#' The downstream indicator loadings are corrected item-total correlations, and
-#' AVE and composite reliability are then computed from those corrected
-#' loadings and the reporting-weight vector, using the same \code{calc_metrics()}
-#' formulas employed by the other weighted families in the package.
+#' The downstream indicator loadings are standardized single-factor loadings
+#' (a minimum-residual one-factor solution of the indicators' pairwise-complete
+#' correlation matrix), and AVE and composite reliability are then computed from
+#' those loadings and the reporting-weight vector, using the same
+#' \code{calc_metrics()} formulas employed by the other weighted families in the
+#' package.
 #'
 #' All median-family methods handle missing data by row-wise exclusion rather
 #' than by automatic imputation. Imputation can still be applied upstream, for

@@ -91,14 +91,14 @@
 #'
 #' When \code{return_metrics = TRUE}, the downstream metric calculations are
 #' based on the final composite scores and normalized weights. The reported
-#' indicator loadings are corrected item-total correlations rather than
-#' correlations with the full composite that contains the focal item. For
-#' indicator \eqn{j}, the implemented loading is
-#'
-#' \deqn{\lambda_j = \mathrm{cor}\!\left(x_j,\,
-#' \frac{\sum_{k \neq j} x_k w_k^{*}}{\sum_{k \neq j}|w_k^{*}|}\right)}
-#'
-#' computed with pairwise-complete observations. This avoids part-whole
+#' indicator loadings \eqn{\lambda_j} are standardized loadings on a single
+#' common factor, estimated by a minimum-residual one-factor solution of the
+#' indicators' pairwise-complete correlation matrix
+#' (\code{psych::fa(..., nfactors = 1, fm = "minres")}). A factor loading is
+#' the quantity the AVE and \eqn{\rho_c} formulas below are derived for: unlike
+#' an item-rest (corrected item-total) correlation it is not attenuated toward
+#' the construct, so AVE and \eqn{\rho_c} are not deflated, and unlike an
+#' item-total correlation against the full composite it is free of part-whole
 #' inflation.
 #'
 #' Using these corrected loadings, the downstream validity metrics are computed

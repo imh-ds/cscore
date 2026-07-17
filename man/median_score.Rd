@@ -29,13 +29,19 @@ comprising said composite variable.}
 \item{weight}{Required weighting schema. Schemas include \code{c("median",
 "median_decay", "median_gauss")}. Default is \code{"median"}.}
 
-\item{decay_rate}{A numeric value reflecting the decay rate (i.e.,
-sensitivity) of the distance-to-median weighting schema. The default value
-is set to 0.5.}
+\item{decay_rate}{Numeric. Decay rate \eqn{\gamma} for \code{"median_decay"}.
+Distances are first scaled by the respondent's item range, so this
+parameter is scale-invariant: \eqn{\gamma = 0.5} means an item at the
+full observed range from the median retains weight \eqn{e^{-0.5} \approx
+0.61}. Larger values penalise outlying items more steeply. Default is
+\code{0.5}.}
 
-\item{sigma}{A numeric value reflecting the sigma value for the Gaussian
-function in the distance-to-median weighting schema. The default value is
-set to 0.5.}
+\item{sigma}{Numeric. Bandwidth \eqn{\sigma} for \code{"median_gauss"}.
+Distances are scaled by the respondent's item range, so \eqn{\sigma} is
+expressed as a proportion of that range: \eqn{\sigma = 0.5} means an item
+at half the range from the median retains weight \eqn{e^{-0.5} \approx
+0.61}. Smaller values make the Gaussian narrower (stronger penalisation).
+Default is \code{0.5}.}
 
 \item{htmt_cutoff}{Numeric threshold used for HTMT PASS/FAIL classification
 in the discriminant-validity summary returned when
@@ -66,61 +72,176 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
  \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
  \item \strong{Validity}: A matrix of composite reliability and validity
  metrics.
+ \item \strong{Discriminant Summary}: A matrix of reporting-set
+ discriminant-validity statistics and PASS/FAIL results.
+ \item \strong{Fornell-Larcker}: A reporting-set matrix whose diagonal is
+ \eqn{\sqrt{AVE}} and whose off-diagonals are absolute inter-construct
+ correlations.
+ \item \strong{HTMT}: A reporting-set matrix of HTMT ratios.
 }
 }
 \description{
-Create composite scores of scales by specifying the indicators
-  that go into each respective composite variable.
+Create lower- and higher-order composite scores from named sets
+  of numeric indicators using median-based scoring rules that reduce the
+  influence of respondent-specific outlying items.
 }
 \details{
-Composite scores can be calculated using three median-based
-weighting schemes: \strong{unweighted median}, \strong{decay-weighted}, and
-\strong{Gaussian-weighted}.
+Median-family composite scoring is implemented by \code{median_score()},
+\code{calc_median_composite()}, and \code{calc_metrics()}. Unlike the
+covariance-, information-, or discriminant-based families, the median
+methods do not estimate one global weight per indicator and then apply that
+same vector to every case. Instead, the distance-weighted variants construct
+a \emph{respondent-specific} weight vector for each row of the indicator
+matrix. The code defines the procedure operationally as follows.
 
-\emph{Unweighted median.} The median composite score
-\eqn{\bar{C}_c^{\mathrm{med}}} for case \eqn{c} is:
+\strong{1. Composite ordering and single-indicator behavior.}
 
-\deqn{\bar{C}_c^{\mathrm{med}} = \mathrm{median}(I_{c1}, I_{c2}, \dots,
-I_{cm})}
+The supplied \code{composite_list} is split into lower-order composites
+(defined directly by observed indicators) and higher-order composites
+(defined by previously computed composites). Lower-order composites are
+scored first and appended to \code{data}; higher-order composites, if any,
+are then scored from those newly appended columns.
 
-where \eqn{I_{cj}} is the value of indicator \eqn{j} for case \eqn{c}, and
-\eqn{m} is the number of indicators.
+If a target composite contains a single indicator, that indicator is returned
+unchanged. When \code{return_metrics = TRUE}, its weight, loading, alpha,
+composite reliability, and AVE are all reported as 1 by definition.
 
-\emph{Decay-weighted median.} For each respondent, let \eqn{M_c} denote the
-within-row median:
+\strong{2. Unweighted median scoring.}
 
-\deqn{M_c = \mathrm{median}(I_{c1}, I_{c2}, \dots, I_{cm})}
+For a composite with indicator matrix
+\eqn{\mathbf{X} = [x_{cj}]} of dimension \eqn{N \times m}, the unweighted
+median method (\code{weight = "median"}) computes, for each case \eqn{c},
 
-The absolute distance to the median is:
+\deqn{C_c^{\mathrm{med}} = \mathrm{median}\left(x_{c1}, \ldots, x_{cm}\right)}
 
-\deqn{D_{cj} = |I_{cj} - M_c|}
+with missing values excluded row-wise by \code{median(..., na.rm = TRUE)}.
+Thus the score is a purely order-statistic summary of the observed item
+values for that respondent. If all indicators are missing for a case, the
+result is \code{NA} (with the standard warning behavior of the underlying
+R median call).
 
-The decay weight for indicator \eqn{j} is then:
+\strong{3. Respondent-specific distance-to-median weighting.}
 
-\deqn{w_{cj} = \exp(-\gamma \cdot D_{cj})}
+For the weighted variants \code{"median_decay"} and \code{"median_gauss"},
+the function first computes each respondent's within-row median:
 
-where \eqn{\gamma} is the user-specified \code{decay_rate}. Weights are
-row-normalized:
+\deqn{M_c = \mathrm{median}\left(x_{c1}, \ldots, x_{cm}\right)}
 
-\deqn{w_{cj}^{*} = \frac{w_{cj}}{\frac{1}{m} \sum_{k=1}^{m} w_{ck}}}
+again excluding missing values. It then computes the signed distance of each
+indicator from that respondent-specific median:
 
-The decay-weighted median composite score is:
+\deqn{D_{cj} = x_{cj} - M_c}
 
-\deqn{\bar{C}_c^{\mathrm{decay}} = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_{cj}^{*}}
+To make the tuning parameters comparable across response scales, the code
+rescales these distances by the respondent's observed item range:
 
-\emph{Gaussian-weighted median.} Using the same distance \eqn{D_{cj}}, the
-Gaussian weight is:
+\deqn{R_c = \max_{j \in O_c}(x_{cj}) - \min_{j \in O_c}(x_{cj})}
 
-\deqn{w_{cj} = \exp\left(-\frac{D_{cj}^2}{2\sigma^2}\right)}
+where \eqn{O_c} denotes the set of observed indicators for case \eqn{c}. The
+implementation protects against degenerate ranges: if a respondent has one or
+fewer observed items, or if all observed items are identical so that
+\eqn{R_c = 0}, the code replaces \eqn{R_c} by 1 before scaling. The scaled
+distance is therefore
 
-where \eqn{\sigma} is the user-specified \code{sigma} parameter controlling
-the spread. Weights are row-normalized as before, and the final score is:
+\deqn{\tilde{D}_{cj} = \frac{D_{cj}}{R_c^{*}}}
 
-\deqn{\bar{C}_c^{\mathrm{gauss}} = \frac{1}{m} \sum_{j=1}^{m} I_{cj} \cdot w_{cj}^{*}}
+where \eqn{R_c^{*} = \max(R_c, 1)} under the implementation's row-wise
+safeguards.
 
-All median-based methods treat each case independently. Weighting is
-performed per respondent, allowing differential emphasis on indicators based
-on their proximity to the respondent-specific median.
+\strong{4. Decay and Gaussian weight functions.}
+
+For \code{weight = "median_decay"}, the raw respondent-specific weight is
+
+\deqn{w_{cj} = \exp\!\left(-\gamma |\tilde{D}_{cj}|\right)}
+
+where \eqn{\gamma = \code{decay_rate}}. Larger values of \eqn{\gamma}
+penalize items farther from the respondent's median more aggressively.
+Because absolute distance is used, items above and below the median are
+treated symmetrically.
+
+For \code{weight = "median_gauss"}, the raw weight is
+
+\deqn{w_{cj} = \exp\!\left(-\frac{\tilde{D}_{cj}^2}{2\sigma^2}\right)}
+
+where \eqn{\sigma = \code{sigma}} controls the width of the Gaussian kernel.
+Smaller \eqn{\sigma} values produce sharper downweighting of indicators far
+from the respondent's median. The implementation requires
+\eqn{\gamma \ge 0} for the decay scheme and \eqn{\sigma > 0} for the
+Gaussian scheme.
+
+\strong{5. Row-wise weight normalization and composite score.}
+
+After the raw respondent-specific weights are computed, the function masks
+them by the observed-data pattern of the indicator matrix. If indicator
+\eqn{j} is missing for case \eqn{c}, its weight is set to 0 for that case.
+The remaining observed-item weights are then normalized within row to sum to
+1:
+
+\deqn{\tilde{w}_{cj} =
+\frac{w_{cj}\mathbf{1}(j \in O_c)}
+{\sum_{k=1}^{m} w_{ck}\mathbf{1}(k \in O_c)}}
+
+The weighted composite is then
+
+\deqn{C_c = \sum_{j=1}^{m} x_{cj}\tilde{w}_{cj}}
+
+with missing items excluded from both the numerator and the denominator by
+construction. If all indicators are missing for a case, the final composite
+is \code{NA}.
+
+This scoring rule is implemented directly in \code{calc_median_composite()}
+rather than through \code{weighted_row_mean()}, because the weights differ by
+respondent rather than remaining constant across rows.
+
+\strong{6. Interpretation of the weighted median family.}
+
+The distance-weighted median schemes are not estimating item quality at the
+sample level. Instead, they estimate \emph{within-respondent coherence} for
+each item relative to that respondent's central tendency. An indicator can
+therefore receive high weight for one respondent and low weight for another,
+depending on how atypical that response is relative to the respondent's own
+profile. This is why these methods are robust to idiosyncratic item-level
+spikes but should not be interpreted as producing a stable population-wide
+measurement model in the same sense as the correlation-, information-, or
+discriminant-based families.
+
+\strong{7. Metric reporting for row-specific weights.}
+
+When \code{return_metrics = TRUE}, the downstream metrics are still computed
+by \code{calc_metrics()}, which expects one weight per indicator rather than
+a full respondent-by-indicator weight matrix. The implementation therefore
+converts respondent-specific weights into a sample-level summary for metric
+reporting:
+
+\enumerate{
+  \item For \code{weight = "median"}, all indicators are assigned reporting
+  weight 1.
+  \item For \code{weight = "median_decay"} and \code{"median_gauss"}, the
+  normalized row-specific weight matrix \eqn{[\tilde{w}_{cj}]} is averaged by
+  column:
+
+  \deqn{\bar{w}_j = \frac{1}{N_j}\sum_{c=1}^{N}\tilde{w}_{cj}}
+
+  where \eqn{N_j} is the number of non-missing row-specific weights for
+  indicator \eqn{j}. The resulting vector is then normalized again with
+  \code{safe_normalize()} before being passed to \code{calc_metrics()}.
+}
+
+Thus, the weights shown in the returned metrics table for the weighted median
+methods are \emph{sample summaries of respondent-specific weights}, not the
+exact row-level weights used to compute every individual composite score.
+
+The downstream indicator loadings are standardized single-factor loadings
+(a minimum-residual one-factor solution of the indicators' pairwise-complete
+correlation matrix), and AVE and composite reliability are then computed from
+those loadings and the reporting-weight vector, using the same
+\code{calc_metrics()} formulas employed by the other weighted families in the
+package.
+
+All median-family methods handle missing data by row-wise exclusion rather
+than by automatic imputation. Imputation can still be applied upstream, for
+example through \code{composite_score(impute = TRUE)}, if that is desired for
+a particular analysis.
 }
 \examples{
 

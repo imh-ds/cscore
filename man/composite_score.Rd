@@ -142,11 +142,14 @@ variables. The model is assumed to be a directed acyclic graph.}
   \item \code{c("pca", "glm")}: Principal component analysis and generalized linear model weighted composite scores.
 }}
 
-\item{decay_rate}{Numeric. Reflects the decay rate (i.e., sensitivity) of the
-distance-to-median weighting schema. The default value is set to 0.5.}
+\item{decay_rate}{Numeric. Decay rate \eqn{\gamma} for
+\code{"median_decay"}. Distances are scaled by each respondent's item
+range before applying the decay function, making this parameter
+scale-invariant across response formats. Default is \code{0.5}.}
 
-\item{sigma}{Numeric. Reflects the sigma value for the Gaussian function in
-the distance-to-median weighting schema. The default value is set to 0.5.}
+\item{sigma}{Numeric. Bandwidth \eqn{\sigma} for \code{"median_gauss"},
+expressed as a proportion of each respondent's item range. Default is
+\code{0.5}.}
 
 \item{entropy}{String. Reflects the mutual information entropy estimator from
 the \code{infotheo} package. Four estimators are available: \code{emp} to
@@ -240,8 +243,30 @@ for discriminant-family weights).
 }}
 
 \item{impute}{Logical. If \code{TRUE}, missing values in the indicator
-columns are imputed via Random Forest (\code{missRanger::missRanger()})
-before composite scores are computed. Defaults to \code{FALSE}.}
+  columns are imputed via Random Forest (\code{missRanger::missRanger()})
+  before composite scores are computed. Defaults to \code{FALSE}.
+
+  \strong{Missing-data policy by family:}
+  \itemize{
+    \item \strong{Covariance} (\code{"average"}, \code{"correlation"},
+      \code{"regression"}), \strong{SD} (\code{"sd_upweight"},
+      \code{"sd_downweight"}), and \strong{Median} families handle missing
+      data natively via row-wise and pairwise \code{na.rm} operations. Each
+      respondent's composite is derived from their observed items; no
+      imputation is required, though \code{impute = TRUE} may improve
+      estimates when missingness is substantial.
+    \item \strong{Mutual Information} (\code{"mutual_info"}) discretizes
+      variables before computing pairwise NMI; missing values may be
+      treated as a spurious discrete category. Imputation is recommended
+      when missingness is non-trivial.
+    \item \strong{Discriminant} (\code{"irt"}, \code{"pca"}, \code{"glm"})
+      always imputes automatically, regardless of this argument, because the
+      underlying latent variable models require complete data.
+  }
+
+  Imputation parameters (\code{pmm_k}, \code{maxiter}, \code{ntrees},
+  \code{seed}) apply to all imputation steps, including the automatic
+  imputation performed by the discriminant family.}
 
 \item{return_metrics}{Logic. Determines whether to return reliability and
 validity metrics. Set to \code{TRUE} for a list of dataframes with
@@ -267,11 +292,26 @@ If \code{return_metrics = FALSE}, a dataframe identical to the input
   \code{return_metrics = TRUE}, a list containing the following dataframes is
   returned:
  \itemize{
- \item \strong{Data}: A dataframe with the composite variables appended as new
- variables.
- \item \strong{Metrics}: A matrix of indicator loadings and weights metrics.
- \item \strong{Validity}: A matrix of composite reliability and validity
- metrics.
+ \item \strong{Data}: A dataframe with the composite variables appended as
+ new variables.
+ \item \strong{Metrics}: A matrix of indicator standardized single-factor
+ loadings and indicator weights.
+ \item \strong{Validity}: A matrix of composite-level reliability and
+ convergent validity metrics, including:
+   \itemize{
+     \item \code{alpha}: Cronbach's alpha. Reported for conventional
+       compatibility; assumes tau-equivalence. Most meaningful for
+       \code{weight = "average"}. For weighted composites, prefer
+       \code{rhoc}.
+     \item \code{rhoc}: Weighted McDonald's omega — a generalization of
+       composite reliability that reflects the actual weighting used in
+       scoring.
+     \item \code{ave}: Average Variance Extracted — a measure of
+       \strong{convergent} validity (\eqn{\geq 0.5} is the conventional
+       threshold). AVE alone does not establish discriminant validity;
+       that requires cross-construct comparison via the Fornell-Larcker
+       criterion or HTMT.
+   }
 }
 }
 \description{
