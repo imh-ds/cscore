@@ -1,3 +1,23 @@
+# cscore 1.0.3
+
+## Bug fixes
+
+- Mutual-information weighting now uses a single entropy estimator throughout.
+  The NMI numerator (`infotheo::mutinformation()`) previously always used the
+  default empirical estimator while the normalizing entropies used the
+  user-supplied `entropy` argument, so for `entropy != "emp"` the NMI was
+  internally inconsistent (two identical variables did not yield NMI = 1). The
+  numerator now also uses `entropy`. This changes `mutual_info` weights/scores
+  when `entropy` is `"mm"`, `"shrink"`, or `"sg"`.
+- `is_discrete_variable()` now honors its `threshold` argument for integer-like
+  doubles. It previously classified *any* integer-like numeric as discrete
+  regardless of cardinality, so high-cardinality counts (e.g., income, days)
+  bypassed `infotheo::discretize()` and produced badly biased entropy/MI. It now
+  requires a double to be integer-like **and** have at most `threshold` unique
+  values, matching the documented behaviour. May change `mutual_info` scores
+  when a high-cardinality integer-like indicator is present. See
+  `changelog/2026-07-17-mutual-information-consistency.md`.
+
 # cscore 1.0.2
 
 ## Bug fixes

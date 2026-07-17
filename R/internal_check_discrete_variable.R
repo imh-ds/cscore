@@ -21,19 +21,24 @@ is_discrete_variable <- function(x, threshold = 10) {
   if (is.factor(x) || is.ordered(x)) return(TRUE)
   if (is.integer(x)) return(TRUE)
   
-  # If numeric, check if it's a float or not
+  # If numeric (double), it is treated as discrete only when it is BOTH
+  # integer-like AND low-cardinality (at most `threshold` unique values). The
+  # threshold matters: a high-cardinality count (e.g., income or days, stored as
+  # a double) is integer-like but should NOT be treated as categorical, because
+  # entropy/mutual-information estimated over hundreds of levels is badly
+  # biased. Such variables fall through to FALSE so callers bin them (e.g., via
+  # infotheo::discretize()) instead. This matches the documented behaviour.
   if (is.numeric(x)) {
     x_no_na <- x[!is.na(x)]
     if (length(x_no_na) == 0) return(FALSE)
-    
-    # If all values are integer-like, it is discrete regardless of threshold
-    is_integer_like <- all(abs(x_no_na - round(x_no_na)) < .Machine$double.eps^0.5)
-    if (is_integer_like) return(TRUE)
-    
+
     unique_vals <- unique(x_no_na)
-    if (length(unique_vals) <= threshold) {
-      return(TRUE)
-    }
+
+    is_integer_like <- all(
+      abs(unique_vals - round(unique_vals)) < .Machine$double.eps^0.5
+    )
+
+    return(is_integer_like && length(unique_vals) <= threshold)
   }
   return(FALSE)
 }

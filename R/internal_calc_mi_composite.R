@@ -137,12 +137,18 @@ calc_mi_composite <- function(
     
     for (j in i:ncol(df)) {
       
-      # Calculate raw MI (unnormalized)
+      # Calculate raw MI (unnormalized). Use the SAME entropy estimator as the
+      # normalizing entropies below so the numerator and denominator are
+      # coherent. Previously the numerator always used the default empirical
+      # ("emp") estimator while the denominators used `entropy`, so for
+      # `entropy != "emp"` the NMI was internally inconsistent (e.g., two
+      # identical variables did not yield NMI = 1).
       mi_raw <- infotheo::mutinformation(
         df[, i],
-        df[, j]
+        df[, j],
+        method = entropy
       )
-      
+
       # Calculate entropy of var i and j
       ent_i <- infotheo::entropy(df[, i],
                                  method = entropy)
