@@ -1,3 +1,25 @@
+# cscore 1.0.4
+
+## Bug fixes
+
+- `discriminant_score()` no longer clobbers the analysis `name` when a
+  `composite_model` is used with `return_metrics = TRUE`. The predictor-scoring
+  loop reused `name` as its iterator, so the exported workbook title received
+  the last predictor's name instead of the user-supplied study name. The loop
+  now uses a separate variable.
+- Higher-order predictors in a `composite_model` are now PCA-weighted regardless
+  of the requested `weight`. Previously they were scored with the user's
+  `weight`, so `weight = "irt"` ran `mirt` on continuous composite scores
+  (non-convergence, invalid weights). Higher-order composites now match the
+  non-model path, which always uses PCA for continuous inputs. Lower-order
+  composites still honor the requested weight.
+- `family = "multinomial"` no longer errors in GLM predictive weighting.
+  `coef()` returns a per-class list for multinomial models; the previous
+  extraction dropped a class and passed a list to `safe_normalize()`. A new
+  helper combines per-class coefficients into one importance-per-predictor
+  vector (mean absolute coefficient across classes). See
+  `changelog/2026-07-17-discriminant-model-fixes.md`.
+
 # cscore 1.0.3
 
 ## Bug fixes

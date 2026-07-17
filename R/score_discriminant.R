@@ -765,21 +765,32 @@ discriminant_score <- function(
       
       # -- RUN WEIGHTED DISCRIMINANT SCORING -- #
       
-      # Loop (instead of lapply) due to need for data to be updated
-      for (name in exp_pred_vars) {
-        
+      # Loop (instead of lapply) due to need for data to be updated. Use
+      # `comp_name` (not `name`) so the function's `name` argument is not
+      # clobbered by the loop variable.
+      for (comp_name in exp_pred_vars) {
+
         # Get indicators
-        var <- pred_varlist[[name]]
-        
+        var <- pred_varlist[[comp_name]]
+
+        # Higher-order predictors are built from continuous composite scores, so
+        # they must be PCA-weighted regardless of the user's `weight`: IRT/mirt
+        # expects item-level ordinal data and misbehaves on continuous inputs.
+        comp_weight <- if (comp_name %in% names(composite_list[["higher"]])) {
+          "pca"
+        } else {
+          weight
+        }
+
         # Get outcomes
-        outcomes <- composite_model[["paths"]] |> 
+        outcomes <- composite_model[["paths"]] |>
           dplyr::filter(
-            from == name
-          ) |> 
+            from == comp_name
+          ) |>
           dplyr::pull(to)
-        
-        data[[name]] <- if (length(var) == 1) {
-          
+
+        data[[comp_name]] <- if (length(var) == 1) {
+
           calc_single_indicator(
             data = data,
             var = var,
@@ -787,13 +798,13 @@ discriminant_score <- function(
             digits = digits,
             return_metrics = return_metrics
           )
-          
+
         } else {
-          
+
           calc_discriminant_composite(
             data = data,
             var = var,
-            weight = weight,
+            weight = comp_weight,
             outcomes = outcomes,
             pred_type = pred_type,
             item_type = item_type,
@@ -808,9 +819,9 @@ discriminant_score <- function(
             seed = seed,
             return_metrics = return_metrics
           )
-          
+
         }
-        
+
       }
       
     }
@@ -961,39 +972,50 @@ discriminant_score <- function(
     # -- IF COMPOSITE MODELING IS SPECIFIED -- #
     if(!is.null(composite_model)) {
       
-      # Loop (instead of lapply) due to need for data to be updated
-      for (name in exp_pred_vars) {
-        
+      # Loop (instead of lapply) due to need for data to be updated. Use
+      # `comp_name` (not `name`) so the function's `name` argument survives the
+      # loop and is passed correctly to finalize_metric_output()/export below.
+      for (comp_name in exp_pred_vars) {
+
         # Get indicators
-        var <- pred_varlist[[name]]
-        
+        var <- pred_varlist[[comp_name]]
+
+        # Higher-order predictors are built from continuous composite scores, so
+        # they must be PCA-weighted regardless of the user's `weight`: IRT/mirt
+        # expects item-level ordinal data and misbehaves on continuous inputs.
+        comp_weight <- if (comp_name %in% names(composite_list[["higher"]])) {
+          "pca"
+        } else {
+          weight
+        }
+
         # Get outcomes
-        outcomes <- composite_model[["paths"]] |> 
+        outcomes <- composite_model[["paths"]] |>
           dplyr::filter(
-            from == name
-          ) |> 
+            from == comp_name
+          ) |>
           dplyr::pull(to)
-        
+
         pred_results <- if (length(var) == 1) {
-          
+
           calc_single_indicator(
             data = data,
             var = var,
-            name = name,
+            name = comp_name,
             digits = digits,
             return_metrics = return_metrics
           )
-          
+
         } else {
-          
+
           calc_discriminant_composite(
             data = data,
             var = var,
-            weight = weight,
+            weight = comp_weight,
             outcomes = outcomes,
             pred_type = pred_type,
             item_type = item_type,
-            name = name,
+            name = comp_name,
             digits = digits,
             alpha = alpha,
             nfolds = nfolds,
@@ -1004,26 +1026,26 @@ discriminant_score <- function(
             seed = seed,
             return_metrics = return_metrics
           )
-          
+
         }
-        
+
         # Extract the score
-        data[[name]] <- pred_results[["composite_score"]]
-        
+        data[[comp_name]] <- pred_results[["composite_score"]]
+
         # Update the data object
         data <- as.data.frame(data)
-        
+
         # Extract the results
         metrics <- rbind(
           metrics,
           pred_results[["composite_metrics"]]
         )
-        
+
         validity <- rbind(
           validity,
           pred_results[["composite_validity"]]
         )
-        
+
       }
       
     }

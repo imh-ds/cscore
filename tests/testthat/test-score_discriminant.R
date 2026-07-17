@@ -99,3 +99,90 @@ test_that("no circularity warning without a composite_model", {
     )
   )
 })
+
+# Shared fixture for the composite_model bug-fix tests below.
+make_model_data <- function() {
+  set.seed(42)
+  n <- 150
+  f1 <- rnorm(n); f2 <- 0.5 * f1 + rnorm(n)
+  mk <- function(l) round(pmin(pmax(3 + l + rnorm(n, sd = 0.8), 1), 5))
+  df <- data.frame(
+    a1 = mk(f1), a2 = mk(f1), a3 = mk(f1),
+    b1 = mk(f2), b2 = mk(f2), b3 = mk(f2),
+    c1 = mk(f2), c2 = mk(f2), c3 = mk(f2)
+  )
+  cl <- composite_list(
+    A = c("a1", "a2", "a3"), B = c("b1", "b2", "b3"), C = c("c1", "c2", "c3"),
+    HI = c("A", "B")
+  )
+  list(df = df, cl = cl, cm = composite_model(link(from = "HI", to = "C")))
+}
+
+test_that("composite_model + return_metrics does not clobber the analysis name", {
+  skip_if_not_installed("glmnet")
+  fx <- make_model_data()
+
+  captured <- NULL
+  local_mocked_bindings(
+    export_metrics = function(metrics, digits, name = NULL, file) {
+      captured <<- name
+    },
+    .package = "cscore"
+  )
+
+  suppressWarnings(suppressMessages(
+    discriminant_score(fx$df, fx$cl, composite_model = fx$cm, weight = "pca",
+                       return_metrics = TRUE, file = "ignored.xlsx",
+                       name = "MY STUDY", seed = 1)
+  ))
+
+  expect_equal(captured, "MY STUDY")
+})
+
+test_that("higher-order predictors in a model are PCA-weighted, not IRT", {
+  skip_if_not_installed("glmnet")
+  skip_if_not_installed("mirt")
+  fx <- make_model_data()
+
+  seen <- list()
+  orig <- cscore:::calc_discriminant_composite
+  local_mocked_bindings(
+    calc_discriminant_composite = function(data, var, weight, ...) {
+      seen[[length(seen) + 1L]] <<- list(var = var, weight = weight)
+      orig(data = data, var = var, weight = weight, ...)
+    },
+    .package = "cscore"
+  )
+
+  suppressWarnings(suppressMessages(
+    discriminant_score(fx$df, fx$cl, composite_model = fx$cm, weight = "irt",
+                       seed = 1)
+  ))
+
+  # The higher-order composite HI is defined by composite names c("A", "B").
+  hi_calls <- Filter(function(x) identical(sort(x$var), c("A", "B")), seen)
+  expect_gt(length(hi_calls), 0)
+  expect_true(all(vapply(hi_calls, function(x) x$weight == "pca", logical(1))))
+
+  # Lower-order composites built from items keep the user-requested IRT weight.
+  lo_calls <- Filter(function(x) all(x$var %in% c("a1", "a2", "a3")), seen)
+  expect_true(all(vapply(lo_calls, function(x) x$weight == "irt", logical(1))))
+})
+
+test_that("GLM predictive weighting handles family = 'multinomial'", {
+  skip_if_not_installed("glmnet")
+  fx <- make_model_data()
+  dat <- fx$df
+  dat$grp <- factor(sample(c("x", "y", "z"), nrow(dat), replace = TRUE))
+
+  score <- suppressWarnings(
+    cscore:::calc_discriminant_composite(
+      data = dat, var = c("a1", "a2", "a3"), weight = "pca",
+      outcomes = "grp", pred_type = "glm", family = "multinomial",
+      alpha = 0.5, nfolds = 5, seed = 1, return_metrics = FALSE
+    )
+  )
+
+  expect_length(score, nrow(dat))
+  expect_true(all(is.finite(score)))
+})

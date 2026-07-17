@@ -306,8 +306,14 @@ calc_discriminant_composite <- function(
             foldid = foldid
           )
 
-          # Extract prediction coefficients
-          coefficients <- coef(cv_fit, s = "lambda.min")[-1]
+          # Extract prediction coefficients (intercept dropped). For most
+          # families coef() returns a single (p+1)-vector; for the multinomial
+          # family it returns a LIST of one (p+1)-vector per class, so we combine
+          # the per-class vectors into one importance-per-predictor vector using
+          # the mean absolute coefficient across classes. Indexing the list with
+          # `[-1]` (the previous behavior) dropped an entire class and then fed a
+          # list to safe_normalize(), which errored.
+          coefficients <- extract_glmnet_coefs(cv_fit)
 
           # Normalize to proportional weights; return zeros when all are zero
           if (sum(abs(coefficients)) < .Machine$double.eps) {
@@ -432,7 +438,39 @@ calc_discriminant_composite <- function(
     )
     
     return(metrics)
-    
+
   }
-  
+
+}
+
+
+#' Extract Predictor Coefficients from a cv.glmnet Fit (Internal)
+#'
+#' Returns a single non-negative importance value per predictor from a
+#' \code{glmnet::cv.glmnet} fit at \code{lambda.min}, dropping the intercept.
+#' For the \code{"gaussian"}, \code{"binomial"}, and \code{"poisson"} families
+#' \code{coef()} yields one coefficient vector, returned as-is (without the
+#' intercept). For the \code{"multinomial"} family \code{coef()} yields a list
+#' of one coefficient vector per class; these are combined into a single vector
+#' via the mean absolute coefficient per predictor across classes, so the return
+#' shape (length \code{ncol(x)}, in predictor order) is identical for every
+#' family.
+#'
+#' @param cv_fit A fitted \code{cv.glmnet} object.
+#'
+#' @return A numeric vector with one value per predictor, in the column order of
+#'   the model matrix.
+#'
+#' @keywords internal
+extract_glmnet_coefs <- function(cv_fit) {
+  co <- stats::coef(cv_fit, s = "lambda.min")
+
+  if (is.list(co)) {
+    # Multinomial: one (p+1) x 1 matrix per class. Drop the intercept row from
+    # each and average the absolute coefficients across classes.
+    per_class <- lapply(co, function(m) abs(as.numeric(m)[-1]))
+    Reduce(`+`, per_class) / length(per_class)
+  } else {
+    as.numeric(co)[-1]
+  }
 }
